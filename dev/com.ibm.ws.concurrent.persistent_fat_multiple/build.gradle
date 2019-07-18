@@ -8,6 +8,64 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
+ 
+configurations {
+  derbyEmbedded
+  //postgres
+  //db2
+  //oracle 
+}
 
+dependencies {
+  requiredLibs 'org.testcontainers:testcontainers:1.11.1',
+               'org.testcontainers:database-commons:1.11.1',
+               'org.testcontainers:jdbc:1.11.1',
+               'org.apache.commons:commons-compress:1.18',
+               'org.rnorth.duct-tape:duct-tape:1.0.7',
+               'org.rnorth.visible-assertions:visible-assertions:2.1.2',
+               'org.rnorth:tcp-unix-socket-proxy:1.0.2',
+               'net.java.dev.jna:jna:5.2.0',
+               'org.slf4j:slf4j-api:1.7.7',
+               'org.slf4j:slf4j-jdk14:1.7.7'
+  derbyEmbedded 'org.apache.derby:derby:10.11.1.1'
+  //postgres 'org.postgresql:postgresql:42.2.5'
+  //db2 ''
+  //oracle ''
+  
+}
 
-addRequiredLibraries.dependsOn addDerby
+task copyAnonymousDerby(type: Copy) {
+  shouldRunAfter jar
+  from configurations.derbyEmbedded
+  into new File(autoFvtDir, 'publish/shared/resources/derby')
+  rename 'derby-.*.jar', 'derby.jar'
+}
+
+//task copyAnonymousPostgres(type: Copy) {
+//  shouldRunAfter jar
+//  from configurations.postgres
+//  into new File(autoFvtDir, 'publish/shared/resources/jdbc')
+//  rename 'postgresql-.*.jar', 'driver.jar'
+//}
+
+//task copyAnonymousDb2(type: Copy) {
+//  shouldRunAfter jar
+//  from configurations.db2
+//  into new File(autoFvtDir, 'publish/shared/resources/jdbc')
+//  rename 'db2-.*.jar', 'driver.jar'
+//}
+
+//task copyAnonymousOracle(type: Copy) {
+//  shouldRunAfter jar
+//  from configurations.oracle
+//  into new File(autoFvtDir, 'publish/shared/resources/jdbc')
+//  rename 'oracle-.*.jar', 'driver.jar'
+//}
+
+//copyAnonymousDerby.onlyIf {System.properties.getProperty("fat.bucket.db.type") == "Debry" || System.properties.getProperty("fat.bucket.db.type") == null}
+//copyAnonymousDb2.onlyIf {System.properties.getProperty("fat.bucket.db.type") == "Postgres"}
+//copyAnonymousDb2.onlyIf {System.properties.getProperty("fat.bucket.db.type") == "DB2"}
+//copyAnonymousDb2.onlyIf {System.properties.getProperty("fat.bucket.db.type") == "Oracle"}
+
+addRequiredLibraries.dependsOn copyAnonymousDerby
+//addRequiredLibraries.dependsOn copyAnonymousPostgres
