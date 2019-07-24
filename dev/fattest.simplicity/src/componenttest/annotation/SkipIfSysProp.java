@@ -65,6 +65,7 @@ public @interface SkipIfSysProp {
     public static final String DB_Informix = "fat.bucket.db.type=Informix";
     public static final String DB_Oracle = "fat.bucket.db.type=Oracle";
     public static final String DB_Sybase = "fat.bucket.db.type=Sybase";
+    public static final String DB_Postgre = "fat.bucket.db.type=Postgre";
 
     String[] value();
 

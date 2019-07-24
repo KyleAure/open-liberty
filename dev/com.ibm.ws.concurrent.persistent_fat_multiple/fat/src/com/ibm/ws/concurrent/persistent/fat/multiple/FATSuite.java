@@ -14,28 +14,62 @@ import org.junit.BeforeClass;
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
 import org.junit.runners.Suite.SuiteClasses;
+import org.testcontainers.containers.GenericContainer;
+import org.testcontainers.containers.PostgreSQLContainer;
 
 import com.ibm.websphere.simplicity.Machine;
 
 import componenttest.topology.impl.LibertyFileManager;
 import componenttest.topology.impl.LibertyServer;
 import componenttest.topology.impl.LibertyServerFactory;
+import database.containers.Db2Container;
+import database.containers.OracleContainer;
 
 @RunWith(Suite.class)
-@SuiteClasses({ MultiplePersistentExecutorsTest.class })
+@SuiteClasses({ MultiplePersistentExecutorsEmbeddedTest.class, MultiplePersistentExecutorsContainerTest.class})
 public class FATSuite {
     static LibertyServer server = LibertyServerFactory.getLibertyServer("com.ibm.ws.concurrent.persistent.fat.multiple");
+    static enum DB {DERBY, POSTGRE, DB2, ORACLE};
+    static DB database;
 
-    /**
-     * Copies the simulated GA repository local files (saved during compilation) to the server install root.
-     *
-     * @param traceTag The tag String to be used to log info.
-     */
     @BeforeClass
     public static void beforeSuite() throws Exception {
         // Delete the Derby-only database that is used by the persistent scheduled executor
         Machine machine = server.getMachine();
         String installRoot = server.getInstallRoot();
         LibertyFileManager.deleteLibertyDirectoryAndContents(machine, installRoot + "/usr/shared/resources/data/persistmultidb");
+        
+        switch(System.getProperty("fat.bucket.db.type", "Derby")) {
+        case "Postgre":
+        	database = DB.POSTGRE;
+        	break;
+        case "DB2":
+        	database = DB.DB2;
+        	break;
+        case "Oracle":
+        	database = DB.ORACLE;
+        	break;
+        case "Derby":
+        	database = DB.DERBY;
+        	break;
+        default: //If not an approved database
+        	System.setProperty("fat.bucket.db.type", "Derby");
+        	database = DB.DERBY;
+        }
+
+    }
+    
+    public static GenericContainer<?> getDatabaseContainer(){
+    	switch(database) {
+		case DB2:
+			return new Db2Container<>();
+		case ORACLE:
+			return new OracleContainer<>();
+		case POSTGRE:
+			return new PostgreSQLContainer<>();
+		case DERBY:
+		default:
+			throw new IllegalStateException("Fat should not attempt to get a database test container when using a derby embedded database.");
+    	}
     }
 }

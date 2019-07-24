@@ -10,7 +10,11 @@
  *******************************************************************************/
 package com.ibm.ws.concurrent.persistent.fat.multiple;
 
+import static componenttest.annotation.SkipIfSysProp.DB_DB2;
 import static componenttest.annotation.SkipIfSysProp.DB_Informix;
+import static componenttest.annotation.SkipIfSysProp.DB_Oracle;
+import static componenttest.annotation.SkipIfSysProp.DB_Sybase;
+import static componenttest.annotation.SkipIfSysProp.DB_Postgre;
 
 import java.util.Collections;
 import java.util.Set;
@@ -23,6 +27,7 @@ import org.junit.runner.RunWith;
 import com.ibm.websphere.simplicity.ShrinkHelper;
 import com.ibm.websphere.simplicity.config.PersistentExecutor;
 import com.ibm.websphere.simplicity.config.ServerConfiguration;
+import com.ibm.ws.concurrent.persistent.fat.multiple.FATSuite.DB;
 
 import componenttest.annotation.SkipIfSysProp;
 import componenttest.custom.junit.runner.FATRunner;
@@ -33,8 +38,8 @@ import componenttest.topology.utils.FATServletClient;
  * Tests for multiple persistent scheduled executor instances sharing the same database
  */
 @RunWith(FATRunner.class)
-@SkipIfSysProp(DB_Informix) // persistent executor is not support on Informix
-public class MultiplePersistentExecutorsTest extends FATServletClient {
+@SkipIfSysProp({DB_DB2,DB_Informix,DB_Oracle,DB_Sybase,DB_Postgre}) //Only use this class if using derby driver
+public class MultiplePersistentExecutorsEmbeddedTest extends FATServletClient {
 
     private static final String APP_NAME = "persistmultitest";
     
@@ -48,6 +53,10 @@ public class MultiplePersistentExecutorsTest extends FATServletClient {
 
     @BeforeClass
     public static void setUp() throws Exception {
+    	if(FATSuite.database == DB.POSTGRE) {
+    		throw new Exception("Ran embedded tests.");
+    	}
+    	
     	ShrinkHelper.defaultDropinApp(server, APP_NAME, "web");
         server.configureForAnyDatabase();
         originalConfig = server.getServerConfiguration();
