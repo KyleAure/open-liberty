@@ -12,6 +12,7 @@ import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.testcontainers.containers.Db2Container;
 import org.testcontainers.containers.GenericContainer;
 
 import com.ibm.websphere.simplicity.ShrinkHelper;
@@ -39,10 +40,22 @@ public class MultiplePersistentExecutorsContainerTest extends FATServletClient{
     
     @ClassRule
     public static GenericContainer<?> anonomousContainer;
+    
+    private static void db2Config(Db2Container container) {
+    	server.addEnvVar("DB2_DBNAME", container.getDatabaseName());
+        server.addEnvVar("DB2_HOSTNAME", container.getContainerIpAddress());
+        server.addEnvVar("DB2_PORT", String.valueOf(container.getMappedPort(50000)));
+        server.addEnvVar("DB2_USER", container.getUsername());
+        server.addEnvVar("DB2_PASS", container.getPassword());
+    }
 
     @BeforeClass
     public static void setUp() throws Exception {
     	anonomousContainer = FATSuite.getDatabaseContainer();
+    	
+    	if(FATSuite.isDB2()) {
+    		db2Config((Db2Container) anonomousContainer);
+    	}
     	
     	ShrinkHelper.defaultDropinApp(server, APP_NAME, "web");
         server.configureForAnyDatabase();

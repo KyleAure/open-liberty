@@ -10,16 +10,18 @@
  *******************************************************************************/
 package com.ibm.ws.concurrent.persistent.fat.multiple;
 
+import java.time.Duration;
+
 import org.junit.BeforeClass;
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
 import org.junit.runners.Suite.SuiteClasses;
 import org.testcontainers.containers.Db2Container;
 import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.containers.PostgreSQLContainer;
 
 import com.ibm.websphere.simplicity.Machine;
 
+import componenttest.custom.junit.runner.FATRunner;
 import componenttest.topology.impl.LibertyFileManager;
 import componenttest.topology.impl.LibertyServer;
 import componenttest.topology.impl.LibertyServerFactory;
@@ -62,12 +64,17 @@ public class FATSuite {
 	public static GenericContainer<?> getDatabaseContainer(){
     	switch(database) {
 		case DB2:
-			return new Db2Container();
-		case POSTGRE:
-			return new PostgreSQLContainer<>();
+			return new Db2Container()
+                    .acceptLicense()
+                    // Use 5m timeout for local runs, 15m timeout for remote runs
+                    .withStartupTimeout(Duration.ofMinutes(FATRunner.FAT_TEST_LOCALRUN ? 5 : 15));
 		case DERBY:
 		default:
 			throw new IllegalStateException("Fat should not attempt to get a database test container when using a derby embedded database.");
     	}
     }
+	
+	public static boolean isDB2() {
+		return database == DB.DB2;
+	}
 }

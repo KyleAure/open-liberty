@@ -14,10 +14,11 @@ configurations {
 }
 
 dependencies {
-  requiredLibs 'org.testcontainers:testcontainers:1.11.1',
-               'org.testcontainers:database-commons:1.11.1',
-               'org.testcontainers:jdbc:1.11.1',
-               'org.testcontainers:postgresql:1.11.1',
+  //Test container libraries
+  requiredLibs 'org.testcontainers:testcontainers:1.12.0',
+               'org.testcontainers:database-commons:1.12.0',
+               'org.testcontainers:jdbc:1.12.0',
+               'org.testcontainers:postgresql:1.12.0',
                'org.testcontainers:db2:1.12.0',
                'org.apache.commons:commons-compress:1.18',
                'org.rnorth.duct-tape:duct-tape:1.0.7',
@@ -27,11 +28,10 @@ dependencies {
                'org.slf4j:slf4j-api:1.7.7',
                'org.slf4j:slf4j-jdk14:1.7.7'
 
-
+  //JDBC driver - depends on database type
   switch(System.properties.getProperty("fat.bucket.db.type")){
     case 'DB2':
-    	//TODO GET JDBC DRIVER
-      //anonymousJDBC 'org.testcontainers:db2:1.12.0'
+      anonymousJDBC 'com.ibm.db2:jcc:11.1.4.4'
       break
     case 'Oracle':
     	//TODO GET JDBC DRIVER
