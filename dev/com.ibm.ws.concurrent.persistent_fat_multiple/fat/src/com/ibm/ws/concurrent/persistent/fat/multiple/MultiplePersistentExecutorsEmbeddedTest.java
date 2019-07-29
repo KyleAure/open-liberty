@@ -27,7 +27,6 @@ import org.junit.runner.RunWith;
 import com.ibm.websphere.simplicity.ShrinkHelper;
 import com.ibm.websphere.simplicity.config.PersistentExecutor;
 import com.ibm.websphere.simplicity.config.ServerConfiguration;
-import com.ibm.ws.concurrent.persistent.fat.multiple.FATSuite.DB;
 
 import componenttest.annotation.SkipIfSysProp;
 import componenttest.custom.junit.runner.FATRunner;
@@ -53,10 +52,6 @@ public class MultiplePersistentExecutorsEmbeddedTest extends FATServletClient {
 
     @BeforeClass
     public static void setUp() throws Exception {
-    	if(FATSuite.database == DB.POSTGRE) {
-    		throw new Exception("Ran embedded tests.");
-    	}
-    	
     	ShrinkHelper.defaultDropinApp(server, APP_NAME, "web");
         server.configureForAnyDatabase();
         originalConfig = server.getServerConfiguration();

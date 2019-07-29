@@ -38,10 +38,12 @@ public class MultiplePersistentExecutorsContainerTest extends FATServletClient{
     private static final String TASK_ID_SEARCH_TEXT = "Task ids: ";
     
     @ClassRule
-    public static GenericContainer<?> anonomousContainer = FATSuite.getDatabaseContainer();
+    public static GenericContainer<?> anonomousContainer;
 
     @BeforeClass
     public static void setUp() throws Exception {
+    	anonomousContainer = FATSuite.getDatabaseContainer();
+    	
     	ShrinkHelper.defaultDropinApp(server, APP_NAME, "web");
         server.configureForAnyDatabase();
         originalConfig = server.getServerConfiguration();

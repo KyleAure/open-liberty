@@ -14,6 +14,7 @@ import org.junit.BeforeClass;
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
 import org.junit.runners.Suite.SuiteClasses;
+import org.testcontainers.containers.Db2Container;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.PostgreSQLContainer;
 
@@ -22,8 +23,6 @@ import com.ibm.websphere.simplicity.Machine;
 import componenttest.topology.impl.LibertyFileManager;
 import componenttest.topology.impl.LibertyServer;
 import componenttest.topology.impl.LibertyServerFactory;
-import database.containers.Db2Container;
-import database.containers.OracleContainer;
 
 @RunWith(Suite.class)
 @SuiteClasses({ MultiplePersistentExecutorsEmbeddedTest.class, MultiplePersistentExecutorsContainerTest.class})
@@ -50,6 +49,7 @@ public class FATSuite {
         	database = DB.ORACLE;
         	break;
         case "Derby":
+        	System.setProperty("fat.bucket.db.type", "Derby");
         	database = DB.DERBY;
         	break;
         default: //If not an approved database
@@ -59,12 +59,10 @@ public class FATSuite {
 
     }
     
-    public static GenericContainer<?> getDatabaseContainer(){
+	public static GenericContainer<?> getDatabaseContainer(){
     	switch(database) {
 		case DB2:
-			return new Db2Container<>();
-		case ORACLE:
-			return new OracleContainer<>();
+			return new Db2Container();
 		case POSTGRE:
 			return new PostgreSQLContainer<>();
 		case DERBY:
