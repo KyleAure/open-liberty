@@ -61,7 +61,7 @@ public class DataSourceJaasTest extends FATServletClient {
         server.addEnvVar("DB_PASSWORD", testContainer.getPassword());
 
         //Setup server DataSource properties
-        DatabaseContainerUtil.setupDataSourceProperties(server, testContainer);
+        DatabaseContainerUtil.configureForDatabase(server, testContainer);
 
         //**** jdbcJassServer apps ****
         ShrinkHelper.defaultApp(server, dsdfat, dsdfat);

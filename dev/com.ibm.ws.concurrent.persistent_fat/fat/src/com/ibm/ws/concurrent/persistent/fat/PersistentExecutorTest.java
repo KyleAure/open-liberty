@@ -13,11 +13,11 @@ package com.ibm.ws.concurrent.persistent.fat;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.testcontainers.containers.JdbcDatabaseContainer;
 
-import com.ibm.websphere.simplicity.Machine;
 import com.ibm.websphere.simplicity.ShrinkHelper;
 
 import componenttest.annotation.Server;
@@ -26,7 +26,6 @@ import componenttest.custom.junit.runner.FATRunner;
 import componenttest.topology.database.container.DatabaseContainerFactory;
 import componenttest.topology.database.container.DatabaseContainerType;
 import componenttest.topology.database.container.DatabaseContainerUtil;
-import componenttest.topology.impl.LibertyFileManager;
 import componenttest.topology.impl.LibertyServer;
 import componenttest.topology.utils.FATServletClient;
 
@@ -39,10 +38,11 @@ public class PersistentExecutorTest extends FATServletClient {
 
     @Server("com.ibm.ws.concurrent.persistent.fat")
     @TestServlet(servlet = SchedulerFATServlet.class, path = APP_NAME)
+    @ClassRule
     public static LibertyServer server;
     
-    @ClassRule
-    public static final JdbcDatabaseContainer<?> testContainer = DatabaseContainerFactory.create();
+    @Rule
+    public static JdbcDatabaseContainer<?> db = new DatabaseContainerFactory().withDerbyOnDisk(server).create();
 
     /**
      * Before running any tests, start the server
@@ -51,16 +51,14 @@ public class PersistentExecutorTest extends FATServletClient {
      */
     @BeforeClass
     public static void setUp() throws Exception {
-    	// Delete the Derby database that might be used by the persistent scheduled executor and the Derby-only test database
-        Machine machine = server.getMachine();
-        String installRoot = server.getInstallRoot();
-        LibertyFileManager.deleteLibertyDirectoryAndContents(machine, installRoot + "/usr/shared/resources/data/scheddb");
-
     	//Get driver type
-    	server.addEnvVar("DB_DRIVER", DatabaseContainerType.valueOf(testContainer).getDriverName());
+    	server.addEnvVar("DB_DRIVER", DatabaseContainerType.valueOf(db).getDriverName());
 
     	//Setup server DataSource properties
-    	DatabaseContainerUtil.setupDataSourceProperties(server, testContainer);
+    	DatabaseContainerUtil.configureForDatabase(server, db);
+    	
+    	//Set up table
+    	DatabaseContainerUtil.createTableResource(db, "CREATE TABLE MYTABLE (MYKEY VARCHAR(80) NOT NULL PRIMARY KEY, MYVALUE INT)");
 
 		//Add application to server
         ShrinkHelper.defaultDropinApp(server, APP_NAME, "web");

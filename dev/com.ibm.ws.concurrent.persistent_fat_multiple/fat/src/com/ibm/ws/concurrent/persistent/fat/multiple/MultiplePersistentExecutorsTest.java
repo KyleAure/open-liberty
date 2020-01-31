@@ -20,7 +20,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.testcontainers.containers.JdbcDatabaseContainer;
 
-import com.ibm.websphere.simplicity.Machine;
 import com.ibm.websphere.simplicity.ShrinkHelper;
 import com.ibm.websphere.simplicity.config.PersistentExecutor;
 import com.ibm.websphere.simplicity.config.ServerConfiguration;
@@ -29,7 +28,6 @@ import componenttest.custom.junit.runner.FATRunner;
 import componenttest.topology.database.container.DatabaseContainerFactory;
 import componenttest.topology.database.container.DatabaseContainerType;
 import componenttest.topology.database.container.DatabaseContainerUtil;
-import componenttest.topology.impl.LibertyFileManager;
 import componenttest.topology.impl.LibertyServer;
 import componenttest.topology.utils.FATServletClient;
 
@@ -52,16 +50,11 @@ public class MultiplePersistentExecutorsTest extends FATServletClient {
     
     @BeforeClass
     public static void setUp() throws Exception {
-        // Delete the Derby-only database that is used by the persistent scheduled executor
-        Machine machine = server.getMachine();
-        String installRoot = server.getInstallRoot();
-        LibertyFileManager.deleteLibertyDirectoryAndContents(machine, installRoot + "/usr/shared/resources/data/persistmultidb");
-
     	//Get driver type
     	server.addEnvVar("DB_DRIVER", DatabaseContainerType.valueOf(testContainer).getDriverName());
 		
     	//Setup server DataSource properties
-    	DatabaseContainerUtil.setupDataSourceProperties(server, testContainer);
+    	DatabaseContainerUtil.configureForDatabase(server, testContainer);
         
     	//Add application to server
     	ShrinkHelper.defaultDropinApp(server, APP_NAME, "web");

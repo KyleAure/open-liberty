@@ -130,7 +130,7 @@ public class ConfigTest extends FATServletClient {
         server.addEnvVar("DB_PASSWORD", testContainer.getPassword());
 
         //Setup server DataSource properties (use database specific properties in order to run testTrace() )
-        DatabaseContainerUtil.setupDataSourceDatabaseProperties(server, testContainer);
+        DatabaseContainerUtil.configureForDatabase(server, testContainer);
 
         // Get JDBC server config
         originalServerConfigUpdatedForJDBC = server.getServerConfiguration().clone();

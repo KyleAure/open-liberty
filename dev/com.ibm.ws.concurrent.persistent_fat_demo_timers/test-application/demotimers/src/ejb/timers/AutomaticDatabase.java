@@ -13,20 +13,14 @@ package ejb.timers;
 import static org.junit.Assert.fail;
 
 import java.sql.Connection;
-import java.sql.DatabaseMetaData;
 import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 
-import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
 import javax.ejb.Schedule;
 import javax.ejb.SessionContext;
 import javax.ejb.Stateless;
 import javax.ejb.Timer;
-import javax.ejb.TransactionAttribute;
-import javax.ejb.TransactionAttributeType;
 import javax.sql.DataSource;
 
 /**
@@ -60,34 +54,6 @@ public class AutomaticDatabase {
      */
     public int getRunCount() {
         return count;
-    }
-
-    @PostConstruct
-    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
-    public void initTable() throws SQLException {
-        final String createTable = "CREATE TABLE AUTOMATICDATABASE (name VARCHAR(64) NOT NULL PRIMARY KEY, count INT)";
-
-        try (Connection conn = ds.getConnection()) {
-            //See if table was already created
-            DatabaseMetaData md = conn.getMetaData();
-            ResultSet rs = md.getTables(null, null, "AUTOMATICDATABASE", null);
-            while (rs.next()) {
-                if (rs.getString("TABLE_NAME").equalsIgnoreCase("AUTOMATICDATABASE")) {
-                    System.out.println("Found table AUTOMATICDATABASE. Skipping creation.");
-                    return;
-                }
-            }
-
-            //If not, create it.
-            try (Statement stmt = conn.createStatement()) {
-                stmt.execute(createTable);
-            } catch (SQLException e) {
-                e.printStackTrace();
-                fail(c.getName() + " caught exception when initializing table: " + e.getMessage());
-            }
-
-            System.out.println("Created table AUTOMATICDATABASE");
-        }
     }
 
     /**

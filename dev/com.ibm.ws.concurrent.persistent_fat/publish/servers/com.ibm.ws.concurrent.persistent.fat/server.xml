@@ -25,8 +25,7 @@
   <databaseStore id="DBTaskStore">
     <dataSource fat.modify="true" jndiName="jdbc/schedDB" id="TaskStoreDS">
       <jdbcDriver libraryRef="FATJDBCLib"/>
-      <!-- properties modified by FATRunner during database rotation. -->
-      <properties createDatabase="create" databaseName="${shared.resource.dir}/data/scheddb"/>
+      <!-- properties created by fattest.databases during database rotation. -->
     </dataSource>
   </databaseStore>
 

@@ -11,14 +11,9 @@
 
 package com.ibm.ws.concurrent.persistent.fat.demo.timers;
 
-import static org.junit.Assert.fail;
-
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
-
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.runner.RunWith;
 import org.testcontainers.containers.JdbcDatabaseContainer;
 
@@ -46,7 +41,6 @@ import ejb.timers.PersistentDemoTimersServlet;
  */
 @RunWith(FATRunner.class)
 public class DemoTimerTest extends FATServletClient {
-    private static final Class<DemoTimerTest> c = DemoTimerTest.class;
 
     public static final String APP_NAME = "demotimer";
 
@@ -54,54 +48,27 @@ public class DemoTimerTest extends FATServletClient {
     @TestServlet(servlet = PersistentDemoTimersServlet.class, path = APP_NAME)
     public static LibertyServer server;
 
-    // Not a ClassRule as Postgres needs to start with a specific command
-    public static final JdbcDatabaseContainer<?> testContainer = DatabaseContainerFactory.create();
+    @ClassRule
+    public static final JdbcDatabaseContainer<?> testContainer = new DatabaseContainerFactory().create();
 
     @BeforeClass
     public static void setUp() throws Exception {
-        // In order to use two phase commit Postgres needs explicit permission to prepare transactions
-        // See documentation here: https://www.postgresql.org/docs/current/sql-prepare-transaction.html
-        if (DatabaseContainerType.valueOf(testContainer) == DatabaseContainerType.Postgres) {
-            testContainer.withCommand("postgres -c max_prepared_transactions=2");
-        }
-
-        //Start Database
-        testContainer.start();
-
         //Get driver name
         server.addEnvVar("DB_DRIVER", DatabaseContainerType.valueOf(testContainer).getDriverName());
 
         //Setup server DataSource properties
-        DatabaseContainerUtil.setupDataSourceProperties(server, testContainer);
+        DatabaseContainerUtil.configureForDatabase(server, testContainer, false);
+        DatabaseContainerUtil.createTableResource(testContainer, "CREATE TABLE AUTOMATICDATABASE (name VARCHAR(64) NOT NULL PRIMARY KEY, count INT)");
 
         //Install App
         ShrinkHelper.defaultDropinApp(server, APP_NAME, "ejb.timers");
 
         //Start server
         server.startServer();
-
-        //Application uses an XA datasource to perform database access.
-        //Oracle restrictions creation/dropping of database tables using transactions with error:
-        //  ORA-02089: COMMIT is not allowed in a subordinate session
-        //Therefore, we will create the table prior to running tests when running against oracle.
-        if (DatabaseContainerType.valueOf(testContainer) == DatabaseContainerType.Oracle) {
-            final String createTable = "CREATE TABLE AUTOMATICDATABASE (name VARCHAR(64) NOT NULL PRIMARY KEY, count INT)";
-
-            try (Connection conn = testContainer.createConnection("")) {
-                try (PreparedStatement pstmt = conn.prepareStatement(createTable)) {
-                    pstmt.executeUpdate();
-                }
-            } catch (SQLException e) {
-                e.printStackTrace();
-                fail(c.getName() + " caught exception when initializing table: " + e.getMessage());
-            }
-
-        }
     }
 
     @AfterClass
     public static void tearDown() throws Exception {
         server.stopServer("CWWKC1501W", "CWWKC1511W");
-        testContainer.stop();
     }
 }

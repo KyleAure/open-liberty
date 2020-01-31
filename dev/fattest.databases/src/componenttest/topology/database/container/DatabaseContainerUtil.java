@@ -11,6 +11,9 @@
 package componenttest.topology.database.container;
 
 import java.lang.reflect.Method;
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 import org.testcontainers.containers.JdbcDatabaseContainer;
@@ -33,21 +36,19 @@ public final class DatabaseContainerUtil {
     }
     
     /**
-     * Performs the same property substitution as {@link DatabaseContainerUtil#setupDataSourceProperties(LibertyServer, JdbcDatabaseContainer)}
-     * but ensures that we use properties.{database} instead of generic properties.
+     * See: {@link #configureForDatabase(LibertyServer, JdbcDatabaseContainer)}
+     * This allows you to specifiy if you want to use generic or database specific properties. 
      */
-    public static void setupDataSourceDatabaseProperties(LibertyServer serv, JdbcDatabaseContainer<?> cont) throws CloneNotSupportedException, Exception {
-        //Skip for Derby and DerbyClient
-    	if (DatabaseContainerType.valueOf(cont) == DatabaseContainerType.Derby ||
-    			DatabaseContainerType.valueOf(cont) == DatabaseContainerType.DerbyClient)
-            return; //Derby used by default no need to change DS properties
-    	
+    public static void configureForDatabase(LibertyServer serv, JdbcDatabaseContainer<?> cont, boolean useGenericProps) throws CloneNotSupportedException, Exception {
     	//Get server config
     	ServerConfiguration cloneConfig = serv.getServerConfiguration().clone();
     	//Get datasources to be changed
     	List<DataSource> datasources = getDataSources(serv, cloneConfig);
     	//Modify those datasources
-    	modifyDataSourcePropsForDatabase(datasources, cloneConfig, serv, cont);
+    	if (useGenericProps)
+    		modifyDataSourcePropsGeneric(datasources, cloneConfig, serv, cont);	
+    	else 
+    		modifyDataSourcePropsForDatabase(datasources, cloneConfig, serv, cont);	
     }
 
     /**
@@ -59,7 +60,7 @@ public final class DatabaseContainerUtil {
      * Using the ServerConfiguration API. Retrieves all &lt;dataSource&gt; elements and modifies
      * those that have the <b>fat.modify=true</b> attribute set. <br>
      *
-     * This will replace the datasource &lt;derby.*.properties... &gt; with the generic properties
+     * This will inject the datasource with generic &lt;properties... &gt; 
      * for the provided JdbcDatabaseContainer. <br>
      *
      * @see com.ibm.websphere.simplicity.config.ServerConfiguration
@@ -68,32 +69,45 @@ public final class DatabaseContainerUtil {
      * @param cont - JdbcDatabaseContainer instance being used for database connectivity.
      *
      * @throws Exception
+     * @throws CloneNotSupportedException
      */
-    public static void setupDataSourceProperties(LibertyServer serv, JdbcDatabaseContainer<?> cont) throws Exception {
-        //Skip for Derby and DerbyClient
-    	if (DatabaseContainerType.valueOf(cont) == DatabaseContainerType.Derby ||
-    			DatabaseContainerType.valueOf(cont) == DatabaseContainerType.DerbyClient)
-            return; //Derby used by default no need to change DS properties
-    	
+    public static void configureForDatabase(LibertyServer serv, JdbcDatabaseContainer<?> cont) throws CloneNotSupportedException, Exception {    	
     	//Get server config
     	ServerConfiguration cloneConfig = serv.getServerConfiguration().clone();
     	//Get datasources to be changed
     	List<DataSource> datasources = getDataSources(serv, cloneConfig);
     	//Modify those datasources
-        modifyDataSourcePropsGeneric(datasources, cloneConfig, serv, cont);
+    	modifyDataSourcePropsGeneric(datasources, cloneConfig, serv, cont);	
     }
     
-    /*
-     * Helper method to get a list of datasources that need to be updated
+    /**
+     * This utility method will allow you to provide a SQL Statement in the form of 
+     *  "CREATE TABLE xxx (col DATATYPE ...)" and this statement will be run in the database
+     *  to setup a table resource to be used for testing.
+     *  
+     * @param cont - database container where SQL Command will be run
+     * @param sqlCreateTable - SQL statement to create table
+     * @throws SQLException - if connection or statement execution fails
      */
+    public static void createTableResource(JdbcDatabaseContainer<?> cont, String sqlCreateTable) throws SQLException {
+    	if(!sqlCreateTable.toUpperCase().contains("CREATE TABLE"))
+    		throw new IllegalArgumentException("A SQL Statement was provided that ");
+    	
+    	try (Connection con = cont.createConnection(""); Statement stmt = con.createStatement()) {
+    		stmt.executeUpdate(sqlCreateTable);
+    	}
+    }
+    
     private static List<DataSource> getDataSources(LibertyServer serv, ServerConfiguration cloneConfig) {
         //Get a list of datasources that need to be updated
-        List<DataSource> datasources = new ArrayList<>();    
+        List<DataSource> datasources = new ArrayList<>();
         
         //Get general datasources
-        for (DataSource ds : cloneConfig.getDataSources())
-            if (ds.getFatModify() != null && ds.getFatModify().equals("true"))
+        for (DataSource ds : cloneConfig.getDataSources()) {
+            if (ds.getFatModify() != null && ds.getFatModify().equals("true")) {
                 datasources.add(ds);
+            }
+        }
 
         //Get datasources that are nested under databasestores
         for (DatabaseStore dbs : cloneConfig.getDatabaseStores())
@@ -116,10 +130,12 @@ public final class DatabaseContainerUtil {
         DataSourceProperties props = new Properties();
         props.setUser(cont.getUsername());
         props.setPassword(cont.getPassword());
-        props.setServerName(cont.getContainerIpAddress());
-    	props.setPortNumber(Integer.toString(cont.getFirstMappedPort()));
-    	try { props.setDatabaseName(cont.getDatabaseName()); } catch (UnsupportedOperationException e) {}
-        
+        try { props.setServerName(cont.getContainerIpAddress());} 
+        	catch (UnsupportedOperationException e) {}
+    	try { props.setPortNumber(Integer.toString(cont.getFirstMappedPort()));}
+    		catch (UnsupportedOperationException e) {}
+    	try { props.setDatabaseName(cont.getDatabaseName());} 
+    		catch (UnsupportedOperationException e) {}
 
         //TODO this should not be required even when using general datasource properties
         // investigating here: https://github.com/OpenLiberty/open-liberty/issues/10066
@@ -131,6 +147,12 @@ public final class DatabaseContainerUtil {
         	Class<?> clazz = type.getContainerClass();
         	Method getSid = clazz.getMethod("getSid");
         	props.setDatabaseName((String) getSid.invoke(cont));
+        }
+        
+        if (type.equals(DatabaseContainerType.Derby) || type.equals(DatabaseContainerType.DerbyClient)) {
+        	Class<?> clazz = type.getContainerClass();
+        	Method createDatabase = clazz.getMethod("createDatabase");
+        	props.setExtraAttribute("createDatabase", (String) createDatabase.invoke(cont));
         }
     	
     	for(DataSource ds : datasources) {
@@ -155,14 +177,23 @@ public final class DatabaseContainerUtil {
     	DataSourceProperties props = type.getDataSourceProps();
         props.setUser(cont.getUsername());
         props.setPassword(cont.getPassword());
-        props.setServerName(cont.getContainerIpAddress());
-    	props.setPortNumber(Integer.toString(cont.getFirstMappedPort()));
-    	try { props.setDatabaseName(cont.getDatabaseName()); } catch (UnsupportedOperationException e) {}
+        try { props.setServerName(cont.getContainerIpAddress());} 
+    		catch (UnsupportedOperationException e) {}
+        try { props.setPortNumber(Integer.toString(cont.getFirstMappedPort()));}
+			catch (UnsupportedOperationException e) {}
+        try { props.setDatabaseName(cont.getDatabaseName());} 
+			catch (UnsupportedOperationException e) {}
     	
         if (type.equals(DatabaseContainerType.Oracle)) {
         	Class<?> clazz = type.getContainerClass();
         	Method getSid = clazz.getMethod("getSid");
         	props.setDatabaseName((String) getSid.invoke(cont));
+        }
+        
+        if (type.equals(DatabaseContainerType.Derby) || type.equals(DatabaseContainerType.DerbyClient)) {
+        	Class<?> clazz = type.getContainerClass();
+        	Method createDatabase = clazz.getMethod("createDatabase");
+        	props.setExtraAttribute("createDatabase", (String) createDatabase.invoke(cont));
         }
 
     	for(DataSource ds : datasources) {

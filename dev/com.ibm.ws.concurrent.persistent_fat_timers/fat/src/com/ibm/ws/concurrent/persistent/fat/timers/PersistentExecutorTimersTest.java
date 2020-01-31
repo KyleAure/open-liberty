@@ -16,7 +16,6 @@ import org.junit.ClassRule;
 import org.junit.runner.RunWith;
 import org.testcontainers.containers.JdbcDatabaseContainer;
 
-import com.ibm.websphere.simplicity.Machine;
 import com.ibm.websphere.simplicity.ShrinkHelper;
 
 import componenttest.annotation.TestServlet;
@@ -24,7 +23,6 @@ import componenttest.custom.junit.runner.FATRunner;
 import componenttest.topology.database.container.DatabaseContainerFactory;
 import componenttest.topology.database.container.DatabaseContainerType;
 import componenttest.topology.database.container.DatabaseContainerUtil;
-import componenttest.topology.impl.LibertyFileManager;
 import componenttest.topology.impl.LibertyServer;
 import componenttest.topology.impl.LibertyServerFactory;
 import componenttest.topology.utils.FATServletClient;
@@ -49,11 +47,6 @@ public class PersistentExecutorTimersTest extends FATServletClient {
      */
     @BeforeClass
     public static void setUp() throws Exception {
-        // Delete the Derby-only database that is used by the persistent executor
-        Machine machine = server.getMachine();
-        String installRoot = server.getInstallRoot();
-        LibertyFileManager.deleteLibertyDirectoryAndContents(machine, installRoot + "/usr/shared/resources/data/persisttimers");
-
     	//Get type
 		DatabaseContainerType dbContainerType = DatabaseContainerType.valueOf(testContainer);
 
@@ -62,7 +55,7 @@ public class PersistentExecutorTimersTest extends FATServletClient {
     	server.addEnvVar("DB_DRIVER", driverName);
 
     	//Setup server DataSource properties
-    	DatabaseContainerUtil.setupDataSourceProperties(server, testContainer);
+    	DatabaseContainerUtil.configureForDatabase(server, testContainer);
 		
 		//Add application to server
         ShrinkHelper.defaultDropinApp(server, APP_NAME, "web", "ejb");

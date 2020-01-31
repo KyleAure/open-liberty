@@ -83,7 +83,7 @@ public class DataSourceTest extends FATServletClient {
         server.addEnvVar("DB_PASSWORD", testContainer.getPassword());
 
         //Setup server DataSource properties
-        DatabaseContainerUtil.setupDataSourceProperties(server, testContainer);
+        DatabaseContainerUtil.configureForDatabase(server, testContainer);
 
         //**** jdbcServer apps ****
         // Dropin app - setupfat.war

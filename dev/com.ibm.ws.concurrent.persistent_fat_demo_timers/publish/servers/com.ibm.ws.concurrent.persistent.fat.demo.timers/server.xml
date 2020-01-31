@@ -22,8 +22,7 @@
   
   <dataSource id="DefaultDataSource" fat.modify="true">
     <jdbcDriver libraryRef="AnonymousJDBCLib"/>
-    <!-- Properties modified by fat for database rotation -->
-    <properties.derby.embedded  createDatabase="create" databaseName="memory:persistenttimersdemo"/>
+    <!-- properties created by fattest.databases during database rotation. -->
   </dataSource>
   
   <library id="AnonymousJDBCLib">

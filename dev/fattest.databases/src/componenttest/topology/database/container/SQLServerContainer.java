@@ -16,6 +16,8 @@ import java.util.stream.Stream;
 import org.testcontainers.containers.JdbcDatabaseContainer;
 import org.testcontainers.utility.LicenseAcceptance;
 
+//TODO this custom SQLServerContainer can be deleted when this PR is included in testconatiner: 
+// https://github.com/testcontainers/testcontainers-java/pull/2085
 public class SQLServerContainer<SELF extends SQLServerContainer<SELF>> extends JdbcDatabaseContainer<SELF> {
 
     public static final String NAME = "sqlserver";
@@ -44,11 +46,6 @@ public class SQLServerContainer<SELF extends SQLServerContainer<SELF>> extends J
         super(dockerImageName);
         withStartupTimeoutSeconds(DEFAULT_STARTUP_TIMEOUT_SECONDS);
         withConnectTimeoutSeconds(DEFAULT_CONNECT_TIMEOUT_SECONDS);
-    }
-
-    @Override
-    protected Integer getLivenessCheckPort() {
-        return getMappedPort(MS_SQL_SERVER_PORT);
     }
 
     @Override
