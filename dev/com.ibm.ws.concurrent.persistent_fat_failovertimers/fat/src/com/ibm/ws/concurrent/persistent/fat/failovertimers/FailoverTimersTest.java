@@ -92,6 +92,7 @@ public class FailoverTimersTest extends FATServletClient {
 
     @BeforeClass
     public static void setUp() throws Exception {
+        
         //Setup datasource properties
         DatabaseContainerUtil.setupDataSourceProperties(serverA, testContainer);
         DatabaseContainerUtil.setupDataSourceProperties(serverB, testContainer);
