@@ -112,7 +112,7 @@ public class PXLockTestWithFailoverEnabled {
         server.addEnvVar("DB_DRIVER", DatabaseContainerType.valueOf(testContainer).getDriverName());
 
         //Setup datasource properties
-        DatabaseContainerUtil.setupDataSourceProperties(server, testContainer);
+        DatabaseContainerUtil.configureForDatabase(server, testContainer);
 
         //Add application to server
         ShrinkHelper.defaultApp(server, APP_NAME, "web");

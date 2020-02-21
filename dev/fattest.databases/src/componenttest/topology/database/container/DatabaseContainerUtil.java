@@ -28,28 +28,6 @@ public final class DatabaseContainerUtil {
     //Logging Constants
     private static final Class<DatabaseContainerUtil> c = DatabaseContainerUtil.class;
     
-    private DatabaseContainerUtil() {
-    	//No objects should be created from this class
-    }
-    
-    /**
-     * Performs the same property substitution as {@link DatabaseContainerUtil#setupDataSourceProperties(LibertyServer, JdbcDatabaseContainer)}
-     * but ensures that we use properties.{database} instead of generic properties.
-     */
-    public static void setupDataSourceDatabaseProperties(LibertyServer serv, JdbcDatabaseContainer<?> cont) throws CloneNotSupportedException, Exception {
-        //Skip for Derby and DerbyClient
-    	if (DatabaseContainerType.valueOf(cont) == DatabaseContainerType.Derby ||
-    			DatabaseContainerType.valueOf(cont) == DatabaseContainerType.DerbyClient)
-            return; //Derby used by default no need to change DS properties
-    	
-    	//Get server config
-    	ServerConfiguration cloneConfig = serv.getServerConfiguration().clone();
-    	//Get datasources to be changed
-    	List<DataSource> datasources = getDataSources(serv, cloneConfig);
-    	//Modify those datasources
-    	modifyDataSourcePropsForDatabase(datasources, cloneConfig, serv, cont);
-    }
-
     /**
      * For use when attempting to use <b>database rotation</b>. <br>
      *
@@ -59,7 +37,7 @@ public final class DatabaseContainerUtil {
      * Using the ServerConfiguration API. Retrieves all &lt;dataSource&gt; elements and modifies
      * those that have the <b>fat.modify=true</b> attribute set. <br>
      *
-     * This will replace the datasource &lt;derby.*.properties... &gt; with the generic properties
+     * This will insert into the datasource a &lt;properties... &gt;  element with the generic properties
      * for the provided JdbcDatabaseContainer. <br>
      *
      * @see com.ibm.websphere.simplicity.config.ServerConfiguration
@@ -69,18 +47,21 @@ public final class DatabaseContainerUtil {
      *
      * @throws Exception
      */
-    public static void setupDataSourceProperties(LibertyServer serv, JdbcDatabaseContainer<?> cont) throws Exception {
-        //Skip for Derby and DerbyClient
-    	if (DatabaseContainerType.valueOf(cont) == DatabaseContainerType.Derby ||
-    			DatabaseContainerType.valueOf(cont) == DatabaseContainerType.DerbyClient)
-            return; //Derby used by default no need to change DS properties
+    public static void configureForDatabase(LibertyServer serv, JdbcDatabaseContainer<?> cont) throws CloneNotSupportedException, Exception {
+    	boolean genericProperties = Boolean.getBoolean(System.getProperty("fat.test.databases.generic", "true"));
     	
     	//Get server config
     	ServerConfiguration cloneConfig = serv.getServerConfiguration().clone();
+    	
     	//Get datasources to be changed
     	List<DataSource> datasources = getDataSources(serv, cloneConfig);
+    	
     	//Modify those datasources
-        modifyDataSourcePropsGeneric(datasources, cloneConfig, serv, cont);
+    	
+    	if(genericProperties)
+    		modifyDataSourcePropsGeneric(datasources, cloneConfig, serv, cont);
+    	else
+    		modifyDataSourcePropsForDatabase(datasources, cloneConfig, serv, cont);
     }
     
     /*
@@ -112,12 +93,12 @@ public final class DatabaseContainerUtil {
     	//Get database type
     	DatabaseContainerType type = DatabaseContainerType.valueOf(cont);
 
-        //Create general properties
-        DataSourceProperties props = new Properties();
+    	//Create general properties
+    	DataSourceProperties props = new Properties();
         props.setUser(cont.getUsername());
         props.setPassword(cont.getPassword());
-        props.setServerName(cont.getContainerIpAddress());
-    	props.setPortNumber(Integer.toString(cont.getFirstMappedPort()));
+        try { props.setServerName(cont.getContainerIpAddress()); } catch (UnsupportedOperationException e) {}
+    	try { props.setPortNumber(Integer.toString(cont.getFirstMappedPort())); } catch (UnsupportedOperationException e) {}
     	try { props.setDatabaseName(cont.getDatabaseName()); } catch (UnsupportedOperationException e) {}
         
 
@@ -132,6 +113,10 @@ public final class DatabaseContainerUtil {
         	Method getSid = clazz.getMethod("getSid");
         	props.setDatabaseName((String) getSid.invoke(cont));
         	props.setExtraAttribute("driverType", "thin");
+        }
+        
+        if (type.equals(DatabaseContainerType.Derby) || type.equals(DatabaseContainerType.DerbyClient)) {
+        	props.setExtraAttribute("createDatabase", "create");
         }
     	
     	for(DataSource ds : datasources) {
@@ -156,14 +141,18 @@ public final class DatabaseContainerUtil {
     	DataSourceProperties props = type.getDataSourceProps();
         props.setUser(cont.getUsername());
         props.setPassword(cont.getPassword());
-        props.setServerName(cont.getContainerIpAddress());
-    	props.setPortNumber(Integer.toString(cont.getFirstMappedPort()));
+        try { props.setServerName(cont.getContainerIpAddress()); } catch (UnsupportedOperationException e) {}
+    	try { props.setPortNumber(Integer.toString(cont.getFirstMappedPort())); } catch (UnsupportedOperationException e) {}
     	try { props.setDatabaseName(cont.getDatabaseName()); } catch (UnsupportedOperationException e) {}
     	
         if (type.equals(DatabaseContainerType.Oracle)) {
         	Class<?> clazz = type.getContainerClass();
         	Method getSid = clazz.getMethod("getSid");
         	props.setDatabaseName((String) getSid.invoke(cont));
+        }
+        
+        if (type.equals(DatabaseContainerType.Derby) || type.equals(DatabaseContainerType.DerbyClient)) {
+        	props.setExtraAttribute("createDatabase", "create");
         }
 
     	for(DataSource ds : datasources) {

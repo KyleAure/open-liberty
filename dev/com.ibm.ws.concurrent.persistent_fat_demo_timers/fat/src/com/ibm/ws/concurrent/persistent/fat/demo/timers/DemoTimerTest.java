@@ -62,7 +62,7 @@ public class DemoTimerTest extends FATServletClient {
         server.addEnvVar("DB_DRIVER", DatabaseContainerType.valueOf(testContainer).getDriverName());
 
         //Setup server DataSource properties
-        DatabaseContainerUtil.setupDataSourceProperties(server, testContainer);
+        DatabaseContainerUtil.configureForDatabase(server, testContainer);
 
         //Install App
         ShrinkHelper.defaultDropinApp(server, APP_NAME, "ejb.timers");

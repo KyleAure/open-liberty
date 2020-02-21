@@ -18,7 +18,7 @@ import org.junit.runners.Suite.SuiteClasses;
 import org.testcontainers.containers.JdbcDatabaseContainer;
 
 import componenttest.topology.database.DerbyNetworkUtilities;
-import componenttest.topology.database.container.DatabaseContainerFactory;
+import componenttest.topology.database.container.DatabaseContainerBuilder;
 import componenttest.topology.database.container.DatabaseContainerType;
 import componenttest.topology.impl.LibertyServer;
 import componenttest.topology.impl.LibertyServerFactory;
@@ -31,7 +31,9 @@ import componenttest.topology.utils.ExternalTestServiceDockerClientStrategy;
 public class FATSuite {
 
     // By default run on DerbyClient and not DerbyEmbedded
-    static final JdbcDatabaseContainer<?> testContainer = DatabaseContainerFactory.create(DatabaseContainerType.DerbyClient);
+    static final JdbcDatabaseContainer<?> testContainer = new DatabaseContainerBuilder()
+                    .withDefaultType(DatabaseContainerType.DerbyClient)
+                    .build();
 
     @BeforeClass
     public static void beforeSuite() throws Exception {
@@ -43,15 +45,14 @@ public class FATSuite {
         server.deleteDirectoryFromLibertyInstallRoot("usr/shared/resources/data/failovertimersdb");
         server.deleteDirectoryFromLibertyInstallRoot("usr/shared/resources/data/failovertimers2db");
 
-        testContainer.start();
-
         DerbyNetworkUtilities.startDerbyNetwork();
+
+        testContainer.start();
     }
 
     @AfterClass
     public static void afterSuite() throws Exception {
-        DerbyNetworkUtilities.stopDerbyNetwork();
-
         testContainer.stop();
+        DerbyNetworkUtilities.stopDerbyNetwork();
     }
 }

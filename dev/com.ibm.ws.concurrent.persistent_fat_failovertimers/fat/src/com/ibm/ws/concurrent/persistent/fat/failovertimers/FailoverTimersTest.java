@@ -94,8 +94,8 @@ public class FailoverTimersTest extends FATServletClient {
     public static void setUp() throws Exception {
         
         //Setup datasource properties
-        DatabaseContainerUtil.setupDataSourceProperties(serverA, testContainer);
-        DatabaseContainerUtil.setupDataSourceProperties(serverB, testContainer);
+        DatabaseContainerUtil.configureForDatabase(serverA, testContainer);
+        DatabaseContainerUtil.configureForDatabase(serverB, testContainer);
 
         //Application uses an XA datasource to perform database access.
         //Oracle restrictions creation/dropping of database tables using transactions with error:

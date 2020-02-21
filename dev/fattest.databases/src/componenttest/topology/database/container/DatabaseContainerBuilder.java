@@ -13,7 +13,6 @@ package componenttest.topology.database.container;
 import static org.junit.Assert.fail;
 
 import java.io.File;
-import java.lang.reflect.Method;
 import java.time.Duration;
 import java.util.function.Consumer;
 
@@ -25,8 +24,8 @@ import com.ibm.websphere.simplicity.log.Log;
 import componenttest.custom.junit.runner.FATRunner;
 
 /**
- * This is a factory class that creates database test-containers.
- * The test container returned will be based on the {fat.bucket.db.type}
+ * This is a builder class that creates database testcontainers.
+ * The testcontainer returned will be based on the {fat.bucket.db.type}
  * system property. </br>
  *
  * The {fat.bucket.db.type} property is set to different databases
@@ -34,8 +33,8 @@ import componenttest.custom.junit.runner.FATRunner;
  * database rotation by setting the property {fat.test.databases} to true.</br>
  *
  * <br> Container Information: <br>
- * Derby: Uses a derby no-op test container <br>
- * DerbyClient: Uses a derby no-op test container <br>
+ * Derby: Uses a derby simulated container <br>
+ * DerbyClient: Uses a derby client simulated container <br>
  * DB2: Uses <a href="https://hub.docker.com/r/ibmcom/db2">Offical DB2 Container</a> <br>
  * Oracle: TODO replace this container with the official oracle-xe container if/when it is available without a license. <br>
  * Postgres: Uses <a href="https://hub.docker.com/_/postgres">Offical Postgres Container</a> <br>
@@ -43,40 +42,68 @@ import componenttest.custom.junit.runner.FATRunner;
  *
  * @see DatabaseContainerType
  */
-public class DatabaseContainerFactory {
-    private static final Class<DatabaseContainerFactory> c = DatabaseContainerFactory.class;
-
-    /**
-     * Used for <b>database rotation testing</b>.
-     *
-     * Reads the {fat.bucket.db.type} system property and
-     * returns a container based on that property.
-     * [Postgres, DB2, Oracle, SQLServer, Derby]
-     *
-     * If {fat.bucket.db.type} is not set with a value,
-     * default to Derby Embedded.
-     *
-     * @return JdbcDatabaseContainer - The test container.
-     *
-     * @throws IllegalArgumentException - if database rotation {fat.test.databases} is not set or is false,
-     *                                      or database type {fat.bucket.db.type} is unsupported.
-     */
-    public static JdbcDatabaseContainer<?> create() throws IllegalArgumentException {
-    	return create(DatabaseContainerType.Derby);
+public class DatabaseContainerBuilder {
+    private static final Class<DatabaseContainerBuilder> c = DatabaseContainerBuilder.class;
+    
+    private DatabaseContainerType defaultType = DatabaseContainerType.Derby;
+    private boolean persistDerby = false;
+    
+	/**
+	 * This method allows you to specify the default database type to use if {fat.bucket.db.type} is not specified.
+	 * This should mainly be used if you want to use derby client instead of derby embedded as your default.
+	 * 
+	 * @param type - default database type
+	 * @return - this for additional config
+	 */
+    public DatabaseContainerBuilder withDefaultType(DatabaseContainerType type) {
+    	this.defaultType = type;
+    	return this;
     }
     
     /**
-     * @see #create()
+     * This method will allow you to persist derby between server restarts.
+     * This will be done by saving derby to the ${shared.resources.dir}/data/testdb location
+     * When testing is done this file will be deleted
      * 
-     * This method let's you specify the default database type if one is not provided.
-     * This should mainly be used if you want to use derby client instead of derby embedded as your default.
+     * @return - this for additional config
      */
-    public static JdbcDatabaseContainer<?> create(DatabaseContainerType defaultType) throws IllegalArgumentException {
+    public DatabaseContainerBuilder withPersistentDerby() {
+    	this.persistDerby = true;
+    	return this;
+    }
+    
+    public DatabaseContainerBuilder withGenericProperties() {
+    	System.setProperty("fat.test.databases.generic", "true");
+    	return this;
+    }
+    
+    public DatabaseContainerBuilder withDatabaseProperties() {
+    	System.setProperty("fat.test.databases.generic", "false");
+    	return this;
+    }
+    
+    /**
+     * Used for <b>database rotation testing</b> <br>
+     *
+     * Reads the {fat.bucket.db.type} system property and
+     * returns a container based on that property.
+     * [Postgres, DB2, Oracle, SQLServer, Derby] <br>
+     *
+     * If {fat.bucket.db.type} is not set with a value, default to Derby Embedded.
+     * You can change this default by using the withDefaultType() method. <br>
+     *
+     * @return JdbcDatabaseContainer - The testcontainer.
+     *
+     * @throws IllegalArgumentException - if database rotation {fat.test.databases} is not set or is false,
+     *                                      or database type {fat.bucket.db.type} is unsupported.
+     * 
+     */
+    public JdbcDatabaseContainer<?> build() throws IllegalArgumentException {
         String dbRotation = System.getProperty("fat.test.databases");
         String dbProperty = System.getProperty("fat.bucket.db.type", defaultType.name());
 
-        Log.info(c, "create", "System property: fat.test.databases is " + dbRotation);
-        Log.info(c, "create", "System property: fat.bucket.db.type is " + dbProperty);
+        Log.info(c, "build", "System property: fat.test.databases is " + dbRotation);
+        Log.info(c, "build", "System property: fat.bucket.db.type is " + dbProperty);
 
         if (!"true".equals(dbRotation)) {
             throw new IllegalArgumentException("To use a generic database, the FAT must be opted into database rotation by setting 'fat.test.databases: true' in the FAT project's bnd.bnd file");
@@ -85,16 +112,16 @@ public class DatabaseContainerFactory {
         DatabaseContainerType type = null;
         try {
             type = DatabaseContainerType.valueOf(dbProperty);
-            Log.info(c, "create", "FOUND: database test-container type: " + type);
+            Log.info(c, "build", "Database testcontainer type: " + type);
         } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException("No database test-container supported for " + dbProperty, e);
+            throw new IllegalArgumentException("No database testcontainer supported for " + dbProperty, e);
         }
 
         return initContainer(type);
     }
 
-    //Private Method: used to initialize test container.
-    private static JdbcDatabaseContainer<?> initContainer(DatabaseContainerType dbContainerType) {
+    //Private Method: used to initialize testcontainer.
+    private JdbcDatabaseContainer<?> initContainer(DatabaseContainerType dbContainerType) {
         //Check to see if JDBC Driver is available.
         isJdbcDriverAvailable(dbContainerType);
 
@@ -107,17 +134,19 @@ public class DatabaseContainerFactory {
 	            case DB2:
 	                cont = (JdbcDatabaseContainer<?>) clazz.getConstructor().newInstance();
 	                //Accept License agreement
-	            	Method acceptDB2License = cont.getClass().getMethod("acceptLicense");
-	            	acceptDB2License.invoke(cont);
+	            	cont.getClass().getMethod("acceptLicense").invoke(cont);
 	            	//Add startup timeout since DB2 tends to take longer than the default 3 minutes on build machines. 
-	            	Method withStartupTimeout = cont.getClass().getMethod("withStartupTimeout", Duration.class);
-	            	withStartupTimeout.invoke(cont, Duration.ofMinutes(FATRunner.FAT_TEST_LOCALRUN ? 5 : 15));
+	            	cont.getClass().getMethod("withStartupTimeout", Duration.class).invoke(cont, Duration.ofMinutes(FATRunner.FAT_TEST_LOCALRUN ? 5 : 15));
 	                break;
 	            case Derby:
 	            	cont = (JdbcDatabaseContainer<?>) clazz.getConstructor().newInstance();
+	            	if(persistDerby)
+	            		cont.getClass().getMethod("withPersistentDerby").invoke(cont);	            	
 	                break;
 				case DerbyClient:
 					cont = (JdbcDatabaseContainer<?>) clazz.getConstructor().newInstance();
+	            	if(persistDerby)
+	            		cont.getClass().getMethod("withPersistentDerby").invoke(cont);	     
 					break;
 	            case Oracle:          	
 	            	cont = (JdbcDatabaseContainer<?>) clazz.getConstructor(String.class).newInstance("kyleaure/oracle-18.4.0-xe-prebuilt:1.0");
@@ -130,28 +159,24 @@ public class DatabaseContainerFactory {
 	            	//If a test is failing that is using XA connections check to see if postgres is failing due to:
 	            	// ERROR: prepared transaction with identifier "???" does not exist STATEMENT: ROLLBACK PREPARED '???'
 	            	// then this value may need to be increased. 
-	            	Method withCommand = cont.getClass().getMethod("withCommand", String.class);
-	            	withCommand.invoke(cont, "postgres -c max_prepared_transactions=5");
+	            	cont.getClass().getMethod("withCommand", String.class).invoke(cont, "postgres -c max_prepared_transactions=5");
 	                break;
 	            case SQLServer:
 	            	cont = (JdbcDatabaseContainer<?>) clazz.getConstructor().newInstance();
 	            	//Accept license agreement
-	            	Method acceptSQLServerLicense = cont.getClass().getMethod("acceptLicense");
-	            	acceptSQLServerLicense.invoke(cont);
+	            	cont.getClass().getMethod("acceptLicense").invoke(cont);
 	            	//Init Script
-	            	Method initScript = cont.getClass().getMethod("withInitScript", String.class);
-	            	initScript.invoke(cont, "resources/init-sqlserver.sql");
+	            	cont.getClass().getMethod("withInitScript", String.class).invoke(cont, "resources/init-sqlserver.sql");
 	                break;
 				default:
 					break;
 	        }
 	        
 	        //Allow each container to log to output.txt
-	        Method withLogConsumer = cont.getClass().getMethod("withLogConsumer", Consumer.class);
-	        withLogConsumer.invoke(cont, (Consumer<OutputFrame>) dbContainerType::log);
+	       cont.getClass().getMethod("withLogConsumer", Consumer.class).invoke(cont, (Consumer<OutputFrame>) dbContainerType::log);
         
         } catch (Exception e) {
-        	e.printStackTrace();
+        	Log.error(c, "initContainer", e);
         	fail("Unable to create a " + dbContainerType.name() + " TestContainer instance.");
         }
         
@@ -167,12 +192,12 @@ public class DatabaseContainerFactory {
      *
      * @return boolean - true if and only if driver exists. Otherwise, false.
      */
-    private static boolean isJdbcDriverAvailable(DatabaseContainerType type) {
+    private boolean isJdbcDriverAvailable(DatabaseContainerType type) {
         File temp = new File("publish/shared/resources/jdbc/" + type.getDriverName());
         boolean result = temp.exists();
 
         if (result) {
-            Log.info(c, "isJdbcDriverAvailable", "FOUND: " + type + " JDBC driver in location: " + temp.getAbsolutePath());
+            Log.info(c, "isJdbcDriverAvailable", type + " JDBC driver in location: " + temp.getAbsolutePath());
         } else {
             Log.warning(c, "MISSING: " + type + " JDBC driver not in location: " + temp.getAbsolutePath());
         }

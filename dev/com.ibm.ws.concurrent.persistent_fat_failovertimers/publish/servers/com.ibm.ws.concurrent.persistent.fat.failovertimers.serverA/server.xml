@@ -27,8 +27,7 @@
   <!-- database for persistent EJB timers -->
   <dataSource id="DefaultDataSource" fat.modify="true">
     <jdbcDriver libraryRef="jdbcLib"/>
-    <!-- properties modified by fat-suite during database rotation -->
-    <properties.derby.client createDatabase="create" databaseName="${shared.resource.dir}/data/failovertimersdb" user="dbuser1" password="dbwpd1"/>
+    <!-- Properties added during database rotation -->
   </dataSource>
 
   <library id="jdbcLib">

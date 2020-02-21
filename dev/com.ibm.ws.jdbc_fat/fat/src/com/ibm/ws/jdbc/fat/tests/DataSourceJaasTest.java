@@ -15,17 +15,16 @@ import org.jboss.shrinkwrap.api.spec.EnterpriseArchive;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
-import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.testcontainers.containers.JdbcDatabaseContainer;
 
 import com.ibm.websphere.simplicity.Machine;
 import com.ibm.websphere.simplicity.ShrinkHelper;
+import com.ibm.ws.jdbc.fat.FATSuite;
 
 import componenttest.annotation.Server;
 import componenttest.custom.junit.runner.FATRunner;
-import componenttest.topology.database.container.DatabaseContainerFactory;
 import componenttest.topology.database.container.DatabaseContainerType;
 import componenttest.topology.database.container.DatabaseContainerUtil;
 import componenttest.topology.impl.LibertyFileManager;
@@ -39,8 +38,7 @@ public class DataSourceJaasTest extends FATServletClient {
     private static final String basicfat = "basicfat";
     private static final String dsdfat = "dsdfat";
 
-    @ClassRule
-    public static final JdbcDatabaseContainer<?> testContainer = DatabaseContainerFactory.create();
+    public static final JdbcDatabaseContainer<?> testContainer = FATSuite.testContainer;
 
     //Server used for DataSourceJaasTest.java
     @Server("com.ibm.ws.jdbc.jaas.fat")
@@ -51,7 +49,6 @@ public class DataSourceJaasTest extends FATServletClient {
         // Delete the Derby database that might be left over from last run
         Machine machine = server.getMachine();
         String installRoot = server.getInstallRoot();
-        LibertyFileManager.deleteLibertyDirectoryAndContents(machine, installRoot + "/usr/shared/resources/data/jdbcfat");
         LibertyFileManager.deleteLibertyDirectoryAndContents(machine, installRoot + "/usr/shared/resources/data/derbyfat");
 
         //Get driver type
@@ -62,7 +59,7 @@ public class DataSourceJaasTest extends FATServletClient {
         server.addEnvVar("DB_PASSWORD", testContainer.getPassword());
 
         //Setup server DataSource properties
-        DatabaseContainerUtil.setupDataSourceProperties(server, testContainer);
+        DatabaseContainerUtil.configureForDatabase(server, testContainer);
 
         //**** jdbcJassServer apps ****
         ShrinkHelper.defaultApp(server, dsdfat, dsdfat);

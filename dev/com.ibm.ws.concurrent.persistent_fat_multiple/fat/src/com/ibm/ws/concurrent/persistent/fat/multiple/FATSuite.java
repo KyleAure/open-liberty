@@ -17,7 +17,7 @@ import org.junit.runners.Suite;
 import org.junit.runners.Suite.SuiteClasses;
 import org.testcontainers.containers.JdbcDatabaseContainer;
 
-import componenttest.topology.database.container.DatabaseContainerFactory;
+import componenttest.topology.database.container.DatabaseContainerBuilder;
 import componenttest.topology.impl.LibertyServer;
 import componenttest.topology.impl.LibertyServerFactory;
 import componenttest.topology.utils.ExternalTestServiceDockerClientStrategy;
@@ -30,7 +30,7 @@ import componenttest.topology.utils.ExternalTestServiceDockerClientStrategy;
 public class FATSuite {
 	
 	static LibertyServer server = LibertyServerFactory.getLibertyServer("com.ibm.ws.concurrent.persistent.fat.multiple");
-	static final JdbcDatabaseContainer<?> testContainer = DatabaseContainerFactory.create();
+	static final JdbcDatabaseContainer<?> testContainer = new DatabaseContainerBuilder().build();
 
     @BeforeClass
     public static void beforeSuite() throws Exception {        

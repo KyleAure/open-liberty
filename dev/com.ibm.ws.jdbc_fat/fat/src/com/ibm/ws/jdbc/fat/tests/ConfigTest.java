@@ -28,7 +28,6 @@ import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
-import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.testcontainers.containers.JdbcDatabaseContainer;
@@ -52,13 +51,13 @@ import com.ibm.websphere.simplicity.config.dsprops.Properties_db2_jcc;
 import com.ibm.websphere.simplicity.config.dsprops.Properties_derby_client;
 import com.ibm.websphere.simplicity.config.dsprops.Properties_derby_embedded;
 import com.ibm.websphere.simplicity.log.Log;
+import com.ibm.ws.jdbc.fat.FATSuite;
 
 import componenttest.annotation.ExpectedFFDC;
 import componenttest.annotation.Server;
 import componenttest.custom.junit.runner.FATRunner;
 import componenttest.custom.junit.runner.Mode;
 import componenttest.custom.junit.runner.Mode.TestMode;
-import componenttest.topology.database.container.DatabaseContainerFactory;
 import componenttest.topology.database.container.DatabaseContainerType;
 import componenttest.topology.database.container.DatabaseContainerUtil;
 import componenttest.topology.impl.LibertyFileManager;
@@ -80,9 +79,7 @@ public class ConfigTest extends FATServletClient {
     @Server("com.ibm.ws.jdbc.fat")
     public static LibertyServer server;
 
-    //Test container
-    @ClassRule
-    public static final JdbcDatabaseContainer<?> testContainer = DatabaseContainerFactory.create();
+    private static final JdbcDatabaseContainer<?> testContainer = FATSuite.testContainer;
 
     //List of apps tested by this test suite
     private static final Set<String> appNames = new HashSet<String>(Arrays.asList(dsdfat, jdbcapp));
@@ -117,7 +114,6 @@ public class ConfigTest extends FATServletClient {
         // Delete the Derby database that might be left over from last run
         Machine machine = server.getMachine();
         String installRoot = server.getInstallRoot();
-        LibertyFileManager.deleteLibertyDirectoryAndContents(machine, installRoot + "/usr/shared/resources/data/jdbcfat");
         LibertyFileManager.deleteLibertyDirectoryAndContents(machine, installRoot + "/usr/shared/resources/data/derbyfat");
 
         // Get original server config
@@ -131,7 +127,7 @@ public class ConfigTest extends FATServletClient {
         server.addEnvVar("DB_PASSWORD", testContainer.getPassword());
 
         //Setup server DataSource properties (use database specific properties in order to run testTrace() )
-        DatabaseContainerUtil.setupDataSourceDatabaseProperties(server, testContainer);
+        DatabaseContainerUtil.configureForDatabase(server, testContainer);
 
         // Get JDBC server config
         originalServerConfigUpdatedForJDBC = server.getServerConfiguration().clone();

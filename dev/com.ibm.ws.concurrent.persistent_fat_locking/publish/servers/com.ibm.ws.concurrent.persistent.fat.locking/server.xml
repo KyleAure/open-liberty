@@ -23,8 +23,7 @@
   <!-- database for scheduled tasks -->
   <dataSource id="LockTestDB" fat.modify="true">
     <jdbcDriver libraryRef="JDBCLib"/>
-    <!-- properties modified by fat-suite during database rotation -->
-   	<properties.derby.embedded createDatabase="create" databaseName="memory:lockdb"/>
+    <!-- Properties added during database rotation -->
   </dataSource>
   
   <library id="JDBCLib">

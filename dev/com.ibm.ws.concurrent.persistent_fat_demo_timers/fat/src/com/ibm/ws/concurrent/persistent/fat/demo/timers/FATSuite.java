@@ -18,14 +18,14 @@ import org.junit.runners.Suite;
 import org.junit.runners.Suite.SuiteClasses;
 import org.testcontainers.containers.JdbcDatabaseContainer;
 
-import componenttest.topology.database.container.DatabaseContainerFactory;
+import componenttest.topology.database.container.DatabaseContainerBuilder;
 import componenttest.topology.utils.ExternalTestServiceDockerClientStrategy;
 
 @RunWith(Suite.class)
 @SuiteClasses(DemoTimerTest.class)
 public class FATSuite {
 
-    static final JdbcDatabaseContainer<?> testContainer = DatabaseContainerFactory.create();
+    static final JdbcDatabaseContainer<?> testContainer = new DatabaseContainerBuilder().build();
 
     @BeforeClass
     public static void beforeSuite() throws Exception {

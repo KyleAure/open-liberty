@@ -62,7 +62,7 @@ public class PersistentExecutorTest extends FATServletClient {
     	//testContainer.stop();
     	//testContainer.start();
     	//Setup server DataSource properties
-    	DatabaseContainerUtil.setupDataSourceProperties(server, testContainer);
+    	DatabaseContainerUtil.configureForDatabase(server, testContainer);
 
 	//Add application to server
         ShrinkHelper.defaultDropinApp(server, APP_NAME, "web");
