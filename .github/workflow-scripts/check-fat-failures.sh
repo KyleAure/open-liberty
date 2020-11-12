@@ -42,9 +42,10 @@ do
   fi
 done
 
-set -e
 if $FAILURE; then
   echo "At least one bucket failed.";
-  exit 1;
+  echo "::set-output name=status::failure"
+else 
+  echo "::set-output name=status::success"
 fi
 

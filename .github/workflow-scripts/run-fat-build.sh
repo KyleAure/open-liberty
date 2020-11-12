@@ -4,6 +4,9 @@
 
 set +e
 
+FAT_RESULTS=$PWD/fat-results
+mkdir $FAT_RESULTS
+
 # Override default LITE mode per-bucket timeout to 45m
 FAT_ARGS="-Dfattest.timeout=2700000"
 
@@ -32,7 +35,7 @@ else
   FAT_BUCKETS=$(cat .github/test-categories/$CATEGORY)
 fi
 
-echo "Will be running buckets $FAT_BUCKETS"
+echo -e "Will be running buckets \n$FAT_BUCKETS"
 for FAT_BUCKET in $FAT_BUCKETS
 do
   if [[ ! -d "dev/$FAT_BUCKET" ]]; then
@@ -47,11 +50,11 @@ if [[ $GH_EVENT_NAME == 'pull_request' && ! $CATEGORY =~ MODIFIED_.*_MODE ]]; th
   echo "This event is a pull request. Will run FATs with: $FAT_ARGS"
 fi
 
-echo "\n## Environment dump:"
+echo -e "\n## Environment dump:"
 env
-echo "\n## Ant version:"
+echo -e "\n## Ant version:"
 ant -version
-echo "\n## Java version:"
+echo -e "\n## Java version:"
 java -version
 
 unzip -q openliberty-image.zip
@@ -59,13 +62,17 @@ cd dev
 chmod +x gradlew
 chmod 777 build.image/wlp/bin/*
 echo "org.gradle.daemon=false" >> gradle.properties
-  
-./gradlew :cnf:initialize :com.ibm.ws.componenttest:build :fattest.simplicity:build
+
+echo "### Build com.ibm.ws.componenttest and fattest.simplicity"
+mkdir -p gradle/fats/ && touch setup.gradle.log
+./gradlew :cnf:initialize :com.ibm.ws.componenttest:build :fattest.simplicity:build > gradle/fats/setup.gradle.log
+
 for FAT_BUCKET in $FAT_BUCKETS
 do
   echo "### BEGIN running FAT bucket $FAT_BUCKET with FAT_ARGS=$FAT_ARGS"
   BUCKET_PASSED=true
-  ./gradlew :$FAT_BUCKET:buildandrun $FAT_ARGS || BUCKET_PASSED=false
+  mkdir -p gradle/fats/ && touch $FAT_BUCKET.gradle.log
+  ./gradlew :$FAT_BUCKET:buildandrun $FAT_ARGS > gradle/fats/$FAT_BUCKET.gradle.log || BUCKET_PASSED=false
   OUTPUT_DIR=$FAT_BUCKET/build/libs/autoFVT/output
   RESULTS_DIR=$FAT_BUCKET/build/libs/autoFVT/results
   mkdir -p $OUTPUT_DIR
@@ -76,8 +83,17 @@ do
     echo "::error::The bucket $FAT_BUCKET failed.";
     touch "$OUTPUT_DIR/fail.log";
   fi
-#  echo "Uploading fat results to testspace"
-#  testspace "[$FAT_BUCKET]$RESULTS_DIR/junit/TEST-*.xml"
+  echo "Collecing fat results in $FAT_RESULTS"
+  for f in $RESULTS_DIR/junit/TEST-*.xml
+  do 
+      if cp $f $FAT_RESULTS &> /dev/null
+      then 
+          : #If copy successful do nothing
+      else 
+          # Otherwise, unit test task may have run, but no results were producted
+          echo "No fat results for $FAT_BUCKET"
+      fi
+  done
   echo "### END running FAT bucket $FAT_BUCKET";
 done
 
