@@ -144,7 +144,7 @@ jobs:
       if: success() && steps.run-unit-tests.outputs.status == 'failure'
       uses: actions/upload-artifact@v2
       with:
-        name: Unit test logs
+        name: Unit Test Logs
         path: dev/cnf/generated/testReports/allUnitTests
     - name: Collect unit test results # Regardless of test status, collect test results [total, success, failure]
       if: success()
@@ -152,11 +152,10 @@ jobs:
       run: .github/workflow-scripts/collect-unit-tests.sh
     - name: Publish unit test report # Publish those results
       if: success()
-      uses: mikepenz/action-junit-report@v1
+      uses: shyim/junit-report-annotations-action@0.2.0
       with:
-        report_paths: './unit-results/TEST-*.xml'
-        check_name: Unit Test Report
-        github_token: ${{ secrets.GITHUB_TOKEN }}
+        path: 'unit-results/TEST-*.xml'
+        errorLevel: 'error'
   fat_tests: #Runs parallel jobs for each FAT category. JDK version and OS are dependent on setup
     name: FAT Tests - ${{matrix.category}}
     needs: [setup, build]
@@ -229,10 +228,9 @@ jobs:
         path: dev/failing_buckets/*.zip
         single-archive: "false"
     - name: Publish FAT report #If test(s) failed publish failures for quick dev access
-      uses: mikepenz/action-junit-report@v1
+      uses: shyim/junit-report-annotations-action@0.2.0
       if: steps.check-fat-failure.outputs.status == 'failure'
       with:
-        report_paths: './fat-results/TEST-*.xml'
-        check_name: ${{matrix.category}} FAT Report
-        github_token: ${{ secrets.GITHUB_TOKEN }}
+        path: 'fat-results/TEST-*.xml'
+	errorLevel: 'error'
       
