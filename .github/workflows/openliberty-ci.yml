@@ -5,7 +5,7 @@ on:
     branches: 
     - integration
     - gh-actions
-    types: [opened, synchronize, reopened, ready_for_review]
+    types: [review_requested, ready_for_review]
     paths-ignore:
       - '.gitignore'
       - '.dockerignore'
