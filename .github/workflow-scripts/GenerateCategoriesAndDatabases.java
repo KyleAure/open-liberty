@@ -115,13 +115,14 @@ public class GenerateCategoriesAndDatabases {
         // Generate the result JSON
         String result = "{ \"include\": [";
         boolean first = true;
+        String[] databases = {"DB2", "Derby", "Postgres", "Oracle", "SQLServer"};
         for (String category : finalCategories) {
-            for (String db : new String[] {"DB2, Derby, Postgres, Oracle, SQLServer"}) {
+            for (String db : databases) {
                 if (first)
                     first = false;
                 else
                     result += ", ";
-                result += "{ \"category\": \"" + category + "\"";
+                result += "{ \"category\": \"" + category + "\" ,";
                 result += " \"database\": \"" + db + "\" } ";
             }
         }

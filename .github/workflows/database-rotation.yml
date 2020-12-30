@@ -4,23 +4,22 @@ on:
   schedule:
     #At the end of every weekday
     - cron:  '0 0 * * 1-5'
+  push:
+    branches:
+      -  github-actions
 env:
   LANG: en_US.UTF-8
 jobs:
-  build: #Main build always done on linix run in parallel to setup and unit-test
-    name: Build Open Liberty
+  setup: 
+    name: Setting Up Build
     runs-on: ubuntu-18.04
     outputs:
       test-matrix: ${{ steps.gen-params.outputs.test-matrix }}
       test-os: ${{ steps.gen-params.outputs.test-os }}
       test-java: ${{ steps.gen-params.outputs.test-java }}
-      test-database: ${{ setps.gen-params.outputs.test-database }}
+      test-database: ${{ steps.gen-params.outputs.test-database }}
     steps:
     - uses: actions/checkout@v2
-      with:
-        repository: ' OpenLiberty/open-liberty'
-        ref: 'master'
-        fetch-depth: 50
     - name: Set up Java
       uses: joschi/setup-jdk@v2
       with:
@@ -31,6 +30,20 @@ jobs:
       env:
         PRBODY: ${{ github.event.pull_request.body }}
       run: .github/workflow-scripts/generate-params.sh
+  build: #Main build always done on linix run in parallel to setup and unit-test
+    name: Build Open Liberty
+    runs-on: ubuntu-18.04
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        repository: 'OpenLiberty/open-liberty'
+        ref: 'master'
+        fetch-depth: 50
+    - name: Set up Java
+      uses: joschi/setup-jdk@v2
+      with:
+        java-version: 11
+        openjdk_impl: openj9
     - name: Apply Gradle cache
       uses: actions/cache@v2
       with:
@@ -68,22 +81,24 @@ jobs:
         path: openliberty-image.zip
   fat_tests: #Runs parallel jobs for each FAT category. JDK version and OS are dependent on setup
     name: FAT Tests - ${{matrix.category}} and ${{matrix.database}}
-    needs: build
-    runs-on: ${{ needs.build.outputs.test-os }}
+    needs: [setup, build]
+    runs-on: ${{ needs.setup.outputs.test-os }}
     strategy:
       fail-fast: false
       max-parallel: 19
-      matrix: ${{fromJson(needs.build.outputs.test-database)}}
+      matrix: ${{fromJson(needs.setup.outputs.test-database)}}
     steps:
     - uses: actions/checkout@v2
       with:
+        repository: 'OpenLiberty/open-liberty'
+        ref: 'master'
         fetch-depth: 50
     - name: Reclaim disk space
       run: .github/workflow-scripts/reclaim-disk-space.sh
     - name: Set up Java
       uses: joschi/setup-jdk@v2
       with:
-        java-version: ${{ needs.build.outputs.test-java }}
+        java-version: ${{ needs.setup.outputs.test-java }}
         openjdk_impl: openj9
     - name: Apply Gradle cache
       uses: actions/cache@v2
