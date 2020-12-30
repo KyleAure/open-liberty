@@ -7,7 +7,7 @@
 set +e
 
 # Override default LITE mode per-bucket timeout to 45m
-FAT_ARGS="-Dfattest.timeout=2700000"
+FAT_ARGS="$FAT_ARGS -Dfattest.timeout=2700000"
 
 # If this is the special 'MODIFIED_*_MODE' job, figure out which buckets 
 # were directly modfied (if any) so they can be launched
@@ -15,7 +15,7 @@ if [[ $CATEGORY =~ MODIFIED_.*_MODE ]]; then
   if [[ $CATEGORY == 'MODIFIED_FULL_MODE' ]]; then
     echo "FAT buckets in this job will run in FULL mode"
     # Give FULL mode buckets a 2h timeout each
-    FAT_ARGS="-Dfat.test.mode=FULL -Dfattest.timeout=7200000"
+    FAT_ARGS="$FAT_ARGS -Dfat.test.mode=FULL -Dfattest.timeout=7200000"
   fi
   git diff --name-only HEAD^...HEAD^2 >> modified_files.diff
   echo "Modified files are:"

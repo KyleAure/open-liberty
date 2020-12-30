@@ -1,3 +1,0 @@
-IBM-ImplementationClass: com.ibm.ws.crypto.util.custom.SimpleCustomEncryption
-IBM-CustomPasswordEncryptionName: customSample
-

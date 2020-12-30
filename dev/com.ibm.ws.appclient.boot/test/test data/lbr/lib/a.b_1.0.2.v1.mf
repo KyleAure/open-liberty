@@ -1,4 +1,0 @@
-Bundle-ManifestVersion: 2
-Bundle-SymbolicName: a.b
-Bundle-Version: 1.0.2.v1
-IBM-Test-Fixes: PK1234

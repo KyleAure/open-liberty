@@ -1,1 +1,0 @@
-DROP TABLE ${schemaname}.CMN10_SimpleVEnt;

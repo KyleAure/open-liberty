@@ -1,1 +1,0 @@
-IBM-SPI-Package: com.ibm.wsspi.kernel.filemonitor

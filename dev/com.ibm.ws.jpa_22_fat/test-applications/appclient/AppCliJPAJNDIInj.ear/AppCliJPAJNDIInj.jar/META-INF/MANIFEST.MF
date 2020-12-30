@@ -1,3 +1,0 @@
-Manifest-Version: 1.0
-Main-Class: jpaappcli.client.jndiinjection.JPAApplicationJNDIInjectClient
-Class-Path: 

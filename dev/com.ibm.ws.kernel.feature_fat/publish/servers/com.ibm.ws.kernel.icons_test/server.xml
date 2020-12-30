@@ -1,8 +1,0 @@
-<server>
-    <featureManager>
-    </featureManager>
-
-    <include location="../fatTestPorts.xml"/>
-    
-    <!-- TESTING THE UPLOAD! -->
-</server>

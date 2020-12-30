@@ -1,3 +1,0 @@
-<project name="@PROJECT_NAME@" default="build">
-	<import file="../ant_build/public_imports/overlay_imports.xml"/>
-</project>

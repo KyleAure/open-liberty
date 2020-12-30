@@ -1,5 +1,0 @@
-<server>
-
-	<javaPermission className="java.util.PropertyPermission" actions="read" name="*"/>
-
-</server>

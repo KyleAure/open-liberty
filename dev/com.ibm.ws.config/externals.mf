@@ -1,1 +1,0 @@
-IBM-API-Package: com.ibm.websphere.config.mbeans; type="ibm-api" 

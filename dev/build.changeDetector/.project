@@ -4,20 +4,20 @@
 	<comment></comment>
 	<projects>
 	</projects>
-    <buildSpec>
-        <buildCommand>
-            <name>org.eclipse.jdt.core.javabuilder</name>
-            <arguments>
-            </arguments>
-        </buildCommand>
-        <buildCommand>
-            <name>bndtools.core.bndbuilder</name>
-            <arguments>
-            </arguments>
-        </buildCommand>
-    </buildSpec>
-    <natures>
-        <nature>org.eclipse.jdt.core.javanature</nature>
-        <nature>bndtools.core.bndnature</nature>
-    </natures>
+	<buildSpec>
+		<buildCommand>
+			<name>org.eclipse.jdt.core.javabuilder</name>
+			<arguments>
+			</arguments>
+		</buildCommand>
+		<buildCommand>
+			<name>bndtools.core.bndbuilder</name>
+			<arguments>
+			</arguments>
+		</buildCommand>
+	</buildSpec>
+	<natures>
+		<nature>org.eclipse.jdt.core.javanature</nature>
+		<nature>bndtools.core.bndnature</nature>
+	</natures>
 </projectDescription>

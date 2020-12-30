@@ -10,7 +10,7 @@
 			<arguments>
 			</arguments>
 		</buildCommand>
-	<buildCommand>
+		<buildCommand>
 			<name>bndtools.core.bndbuilder</name>
 			<arguments>
 			</arguments>

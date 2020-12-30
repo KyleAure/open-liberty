@@ -1,3 +1,0 @@
-<archive>
-    <dir targetInArchive="/" sourceOnDisk="${server.config.dir}/testWarApplication" excludes="*.txt"/>
-</archive>

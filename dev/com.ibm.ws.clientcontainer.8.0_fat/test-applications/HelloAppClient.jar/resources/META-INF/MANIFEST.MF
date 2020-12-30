@@ -1,3 +1,0 @@
-Manifest-Version: 1.0
-Main-Class: com.ibm.ws.clientcontainer.HelloAppClient.test.HelloAppClient
-Class-Path: 

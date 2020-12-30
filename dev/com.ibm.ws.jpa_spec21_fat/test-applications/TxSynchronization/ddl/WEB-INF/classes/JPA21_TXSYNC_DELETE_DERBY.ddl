@@ -1,1 +1,0 @@
-DELETE FROM ${schemaname}.CMN10_SimpleVEnt;

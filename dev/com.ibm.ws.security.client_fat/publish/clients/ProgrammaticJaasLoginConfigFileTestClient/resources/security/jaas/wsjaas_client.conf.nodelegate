@@ -1,3 +1,0 @@
-customClientContainer {
-	com.ibm.ws.security.jaas.common.modules.WSLoginModuleProxy required;
-};

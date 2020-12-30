@@ -1,4 +1,0 @@
-{ 
-   "Diplodicus": "long",
-   "Tyranosaurus" : "scary"
-}

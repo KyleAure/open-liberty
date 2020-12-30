@@ -1,3 +1,0 @@
-<server>
-	<jmsConnectionFactory id="DefaultJMSConnectionFactory" javaCompDefaultName="DefaultJMSConnectionFactory"/>
-</server>
