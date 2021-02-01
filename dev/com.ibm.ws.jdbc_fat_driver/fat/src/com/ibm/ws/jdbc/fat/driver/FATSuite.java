@@ -19,5 +19,6 @@ import org.junit.runners.Suite.SuiteClasses;
                 JDBCDriverManagerTest.class,
 })
 public class FATSuite {
+    //FIXME fake change for testing
 
 }

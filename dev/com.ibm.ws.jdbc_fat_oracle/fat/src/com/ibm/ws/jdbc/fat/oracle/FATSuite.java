@@ -29,7 +29,7 @@ import oracle.jdbc.pool.OracleDataSource;
 @RunWith(Suite.class)
 @SuiteClasses({ OracleTest.class, OracleTraceTest.class, OracleUCPTest.class })
 public class FATSuite {
-    //extra comment to remove later
+    //FIXME fake change for testing
 
     //Required to ensure we calculate the correct strategy each run even when
     //switching between local and remote docker hosts.

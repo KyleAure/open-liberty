@@ -31,6 +31,7 @@ import componenttest.topology.impl.LibertyServerFactory;
                 ErrorMappingTest.class
 })
 public class FATSuite {
+    //FIXME fake change for testing
     public static final String appName = "basicfat";
     public static LibertyServer server = LibertyServerFactory.getLibertyServer("com.ibm.ws.jdbc.fat.v41");
 

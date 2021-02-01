@@ -27,6 +27,7 @@ import componenttest.topology.impl.LibertyServerFactory;
                 JDBCDynamicConfigTest.class
 })
 public class FATSuite {
+    //FIXME fake change for testing
 
     static final String SERVER = "com.ibm.ws.jdbc.fat.derby";
     static final String jdbcapp = "jdbcapp";

@@ -19,4 +19,6 @@ import org.junit.runners.Suite.SuiteClasses;
                 JDBCLoadFromAppTest.class
 
 })
-public class FATSuite {}
+public class FATSuite {
+    //FIXME fake change for testing
+}

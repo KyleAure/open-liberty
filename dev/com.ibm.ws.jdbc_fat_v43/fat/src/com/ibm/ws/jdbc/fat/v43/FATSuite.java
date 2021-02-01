@@ -18,4 +18,6 @@ import org.junit.runners.Suite.SuiteClasses;
 @SuiteClasses({
                 JDBC43Test.class
 })
-public class FATSuite {}
+public class FATSuite {
+    //FIXME fake change for testing
+}

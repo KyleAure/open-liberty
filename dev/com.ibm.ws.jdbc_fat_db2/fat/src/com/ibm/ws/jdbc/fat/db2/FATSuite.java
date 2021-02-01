@@ -30,6 +30,7 @@ import componenttest.custom.junit.runner.FATRunner;
                 SQLJTest.class
 })
 public class FATSuite {
+    //FIXME fake change for testing
 
     //Required to ensure we calculate the correct strategy each run even when
     //switching between local and remote docker hosts.

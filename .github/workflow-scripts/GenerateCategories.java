@@ -1,10 +1,10 @@
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -99,23 +99,19 @@ public class GenerateCategories {
             debug("At least 1 FAT was modified in this PR.");
 
             String liteCategory = "MODIFIED_LITE_MODE";
-            Path liteCategoryPath = Files.createFile(Paths.get(TEST_CATEGORY_DIR + liteCategory));
-            FileWriter writerlite = new FileWriter(liteCategoryPath.toFile());
             finalCategories.add(liteCategory);
+            Path liteOut = Paths.get(TEST_CATEGORY_DIR + liteCategory);
 
             int partitionSize = 5;
             for (int i = 0; i < modifiedFATs.size(); i += partitionSize) {
                 String fullCategory = "MODIFIED_FULL_MODE" + i;
-                Path fullCategoryPath = Files.createFile(Paths.get(TEST_CATEGORY_DIR + fullCategory));
-                FileWriter writerfull = new FileWriter(fullCategoryPath.toFile());
                 finalCategories.add(fullCategory);
-
-                for( String modifiedFAT : modifiedFATs.subList(i, Math.min(i + partitionSize, modifiedFATs.size()))) {
-                    writerlite.append(modifiedFAT);
-                    writerfull.append(modifiedFAT);
-                }
+                Path fullOut = Paths.get(TEST_CATEGORY_DIR + fullCategory);
+                Files.write(liteOut, modifiedFATs.subList(i, Math.min(i + partitionSize, modifiedFATs.size())), StandardOpenOption.CREATE, StandardOpenOption.APPEND);
+                Files.write(fullOut, modifiedFATs.subList(i, Math.min(i + partitionSize, modifiedFATs.size())), StandardOpenOption.CREATE, StandardOpenOption.APPEND);
             }
         }
+        
         // now add mentioned categories in order
         finalCategories.addAll(mentionedCategories.values());
         // finally add all remaining categories
@@ -123,6 +119,11 @@ public class GenerateCategories {
 
         debug("Final categories are:");
         debug(finalCategories);
+
+        //Fail build here if we generate more categories than github can handle
+        if (finalCategories.size() >= 256) {
+            throw new RuntimeException("We generated 256 categories or more.  GitHub Actions has a hard limit on number of categories.");
+        }
 
         // Generate the result JSON
         String result = "{ \"include\": [";

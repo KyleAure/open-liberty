@@ -34,6 +34,7 @@ import componenttest.custom.junit.runner.FATRunner;
                 ErrorPathTest.class
 })
 public class FATSuite {
+    //FIXME fake change for testing
 
     public static Network network;
     public static KerberosContainer krb5;
