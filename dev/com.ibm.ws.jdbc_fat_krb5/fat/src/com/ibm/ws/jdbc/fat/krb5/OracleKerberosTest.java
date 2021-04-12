@@ -35,8 +35,6 @@ import componenttest.annotation.AllowedFFDC;
 import componenttest.annotation.Server;
 import componenttest.annotation.TestServlet;
 import componenttest.custom.junit.runner.FATRunner;
-import componenttest.custom.junit.runner.Mode;
-import componenttest.custom.junit.runner.Mode.TestMode;
 import componenttest.topology.impl.JavaInfo;
 import componenttest.topology.impl.JavaInfo.Vendor;
 import componenttest.topology.impl.LibertyServer;
@@ -44,7 +42,7 @@ import componenttest.topology.utils.FATServletClient;
 import jdbc.krb5.oracle.web.OracleKerberosTestServlet;
 
 @RunWith(FATRunner.class)
-@Mode(TestMode.FULL)
+//@Mode(TestMode.FULL)
 public class OracleKerberosTest extends FATServletClient {
 
     private static final Class<?> c = OracleKerberosTest.class;
@@ -60,7 +58,7 @@ public class OracleKerberosTest extends FATServletClient {
     @ClassRule
     public static KerberosPlatformRule skipRule = new KerberosPlatformRule();
 
-    @ClassRule
+    //@ClassRule
     public static IBMJava8Rule skipOnIBMJava8 = new IBMJava8Rule();
 
     @BeforeClass

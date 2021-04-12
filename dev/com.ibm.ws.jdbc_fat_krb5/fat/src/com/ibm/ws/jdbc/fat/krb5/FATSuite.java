@@ -22,16 +22,14 @@ import com.ibm.ws.jdbc.fat.krb5.containers.KerberosContainer;
 import com.ibm.ws.jdbc.fat.krb5.containers.KerberosPlatformRule;
 
 import componenttest.containers.ExternalTestServiceDockerClientStrategy;
-import componenttest.custom.junit.runner.AlwaysPassesTest;
-import componenttest.custom.junit.runner.FATRunner;
 
 @RunWith(Suite.class)
 @SuiteClasses({
-                AlwaysPassesTest.class, // needed because kerberos is only supported on certain OSes
-                DB2KerberosTest.class,
-                PostgresKerberosTest.class,
+                //AlwaysPassesTest.class, // needed because kerberos is only supported on certain OSes
+                //DB2KerberosTest.class,
+                //PostgresKerberosTest.class,
                 OracleKerberosTest.class,
-                ErrorPathTest.class
+                //ErrorPathTest.class
 })
 public class FATSuite {
 
@@ -49,7 +47,7 @@ public class FATSuite {
         };
     }
 
-    public static final boolean REUSE_CONTAINERS = FATRunner.FAT_TEST_LOCALRUN && !ExternalTestServiceDockerClientStrategy.USE_REMOTE_DOCKER_HOST;
+    public static final boolean REUSE_CONTAINERS = false;
 
     static {
         // Needed for IBM JDK 8 support.

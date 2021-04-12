@@ -831,7 +831,8 @@ public class OracleHelper extends DatabaseHelper {
         
         if (useKerb != KerbUsage.NONE) {
             try {
-                checkIBMJava8();
+                Tr.info(tc, "KJA1017 Check for IBM Java 8 disabled!");
+                //checkIBMJava8();
                 setKerberosDatasourceProperties(ds);
             } catch (ResourceException ex) {
                 throw AdapterUtil.toSQLException(ex);
@@ -851,7 +852,8 @@ public class OracleHelper extends DatabaseHelper {
                      cri, useKerberos, gssCredential);
         
         if (useKerberos != KerbUsage.NONE) {
-            checkIBMJava8();
+            Tr.info(tc, "KJA1017 Check for IBM Java 8 disabled!");
+            //checkIBMJava8();
             setKerberosDatasourceProperties(ds);
         }
         ConnectionResults results = super.getPooledConnection(ds, userName, password, is2Phase, cri, useKerberos, gssCredential);

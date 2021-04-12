@@ -16,7 +16,11 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.sql.Connection;
 import java.sql.SQLException;
 
@@ -24,18 +28,16 @@ import javax.annotation.Resource;
 import javax.security.auth.login.LoginException;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.sql.DataSource;
 
 import org.junit.Test;
 
-import componenttest.annotation.AllowedFFDC;
-import componenttest.app.FATServlet;
-
 @SuppressWarnings("serial")
 @WebServlet(urlPatterns = "/OracleKerberosTestServlet")
-public class OracleKerberosTestServlet extends FATServlet {
+public class OracleKerberosTestServlet extends HttpServlet {
 
     @Resource(lookup = "jdbc/nokrb5")
     DataSource noKrb5;
@@ -54,6 +56,87 @@ public class OracleKerberosTestServlet extends FATServlet {
 
     @Resource(lookup = "jdbc/krb/DataSource")
     DataSource krb5RegularDs;
+
+    public static final String SUCCESS = "SUCCESS";
+    public static final String TEST_METHOD = "testMethod";
+
+    /**
+     * Override to mimic JUnit's {@code @Before} annotation.
+     */
+    protected void before() throws Exception {
+    }
+
+    /**
+     * Override to mimic JUnit's {@code @After} annotation.
+     */
+    protected void after() throws Exception {
+    }
+
+    /**
+     * Implement this method for custom test invocation, such as specific test method signatures
+     */
+    protected void invokeTest(String method, HttpServletRequest request, HttpServletResponse response) throws Exception {
+        throw new NoSuchMethodException("No such method '" + method + "' found on class "
+                                        + getClass() + " with any of the following signatures:   "
+                                        + method + "(HttpServletRequest, HttpServletResponse)   "
+                                        + method + "()");
+    }
+
+    @Override
+    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        // see getConnectionWithRetry for reasoning behind wait
+        waitFor(750);
+        String method = request.getParameter(TEST_METHOD);
+
+        System.out.println(">>> BEGIN: " + method);
+        System.out.println("Request URL: " + request.getRequestURL() + '?' + request.getQueryString());
+        PrintWriter writer = response.getWriter();
+        if (method != null && method.length() > 0) {
+            try {
+                before();
+
+                // Use reflection to try invoking various test method signatures:
+                // 1)  method(HttpServletRequest request, HttpServletResponse response)
+                // 2)  method()
+                // 3)  use custom method invocation by calling invokeTest(method, request, response)
+                try {
+                    Method mthd = getClass().getMethod(method, HttpServletRequest.class, HttpServletResponse.class);
+                    mthd.invoke(this, request, response);
+                } catch (NoSuchMethodException nsme) {
+                    try {
+                        Method mthd = getClass().getMethod(method, (Class<?>[]) null);
+                        mthd.invoke(this);
+                    } catch (NoSuchMethodException nsme1) {
+                        invokeTest(method, request, response);
+                    }
+                } finally {
+                    after();
+                }
+
+                writer.println(SUCCESS);
+            } catch (Throwable t) {
+                if (t instanceof InvocationTargetException) {
+                    t = t.getCause();
+                }
+
+                System.out.println("ERROR: " + t);
+                StringWriter sw = new StringWriter();
+                t.printStackTrace(new PrintWriter(sw));
+                System.err.print(sw);
+
+                writer.println("ERROR: Caught exception attempting to call test method " + method + " on servlet " + getClass().getName());
+                t.printStackTrace(writer);
+            }
+        } else {
+            System.out.println("ERROR: expected testMethod parameter");
+            writer.println("ERROR: expected testMethod parameter");
+        }
+
+        writer.flush();
+        writer.close();
+
+        System.out.println("<<< END:   " + method);
+    }
 
     /**
      * Getting a connection too soon after the initial ticket is obtained can cause intermittent
@@ -104,15 +187,7 @@ public class OracleKerberosTestServlet extends FATServlet {
         }
     }
 
-    @Override
-    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        // see getConnectionWithRetry for reasoning behind wait
-        waitFor(750);
-        super.doGet(request, response);
-    }
-
     @Test
-    @AllowedFFDC
     public void testNonKerberosConnection() throws Exception {
         try (Connection con = getConnectionWithRetry(noKrb5)) {
             con.createStatement().execute("SELECT 1 FROM DUAL");
@@ -123,7 +198,6 @@ public class OracleKerberosTestServlet extends FATServlet {
      * Get a connection from a javax.sql.ConnectionPoolDataSource
      */
     @Test
-    @AllowedFFDC
     public void testKerberosBasicConnection() throws Exception {
         try (Connection con = getConnectionWithRetry(krb5DataSource)) {
             con.createStatement().execute("SELECT 1 FROM DUAL");
@@ -145,7 +219,6 @@ public class OracleKerberosTestServlet extends FATServlet {
      * Get a connection from a javax.sql.XADataSource
      */
     @Test
-    @AllowedFFDC
     public void testKerberosXAConnection() throws Exception {
         try (Connection con = getConnectionWithRetry(krb5XADataSource)) {
             con.createStatement().execute("SELECT 1 FROM DUAL");
@@ -156,7 +229,6 @@ public class OracleKerberosTestServlet extends FATServlet {
      * Get a connection from a javax.sql.DataSource
      */
     @Test
-    @AllowedFFDC
     public void testKerberosRegularConnection() throws Exception {
         try (Connection con = getConnectionWithRetry(krb5RegularDs)) {
             con.createStatement().execute("SELECT 1 FROM DUAL");
@@ -164,7 +236,6 @@ public class OracleKerberosTestServlet extends FATServlet {
     }
 
     @Test
-    @AllowedFFDC
     public void testInvalidPrincipal() throws Exception {
         try (Connection con = invalidPrincipalDs.getConnection()) {
             con.createStatement().execute("SELECT 1 FROM DUAL");
@@ -187,7 +258,6 @@ public class OracleKerberosTestServlet extends FATServlet {
      * to prove that Subject reuse is working
      */
     @Test
-    @AllowedFFDC
     public void testConnectionReuse() throws Exception {
         String managedConn1 = null;
         String managedConn2 = null;
