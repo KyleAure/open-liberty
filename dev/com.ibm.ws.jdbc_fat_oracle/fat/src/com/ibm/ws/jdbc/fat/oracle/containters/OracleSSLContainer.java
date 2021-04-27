@@ -31,7 +31,7 @@ public class OracleSSLContainer extends OracleContainer {
     private static final int HTTP_PORT = 8080;
     private static final String WALLET_PASS = "WalletPasswd123";
 
-    private static final String IMAGE_NAME = "kyleaure/oracle-ssl-18.4.0-xe-prebuilt:2.0";
+    private static final String IMAGE_NAME = "kyleaure/oracle-ssl-18.4.0-xe-prebuilt:2.1";
 
     public OracleSSLContainer() {
         super(IMAGE_NAME);

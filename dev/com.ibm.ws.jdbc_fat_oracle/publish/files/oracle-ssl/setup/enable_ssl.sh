@@ -21,6 +21,9 @@ fi
 WALLET_PWD="WalletPasswd123"
 DN="CN=localhost"
 
+JAVA_HOME=/opt/oracle/product/18c/dbhomeXE/jdk
+export PATH=$JAVA_HOME/bin:$PATH
+
 #PART 1: Creating server wallet and cert
 SERVER_WALLET="/u01/app/oracle/wallet"
 SERVER_CERT="/tmp/oracle-server-certificate.crt"
@@ -58,15 +61,18 @@ chown -R oracle:oinstall $SERVER_WALLET
 chown -R oracle:oinstall $CLIENT_WALLET
 
 # PART 4: Create JKS wallet from oracle wallet
-echoDebug "START >>> Create JKS wallet"
-CLIENT_KEYSTORE="/client/oracle/store/client-keystore.jks"
-CLIENT_TRUSTSTORE="/client/oracle/store/client-truststore.jks"
+echoDebug "START >>> Create Keystore / Truststore"
+CLIENT_KEYSTORE="/client/oracle/store/client-keystore.p12"
+CLIENT_TRUSTSTORE="/client/oracle/store/client-truststore.p12"
+
 mkdir -p /client/oracle/store
-orapki wallet pkcs12_to_jks \
-  -wallet $CLIENT_WALLET/ewallet.p12 -pwd $WALLET_PWD \
-  -jksKeyStoreLoc   $CLIENT_KEYSTORE   -jksKeyStorepwd $WALLET_PWD \
-  -jksTrustStoreLoc $CLIENT_TRUSTSTORE -jksTrustStorepwd $WALLET_PWD
-echoDebug "DONE >>> Create JKS wallet"
+
+keytool -noprompt -import -trustcacerts -file $CLIENT_CERT -keystore $CLIENT_TRUSTSTORE -alias CLIENT -storepass $WALLET_PWD -storetype PKCS12
+keytool -noprompt -import -trustcacerts -file $SERVER_CERT -keystore $CLIENT_TRUSTSTORE -alias SERVER -storepass $WALLET_PWD -storetype PKCS12
+
+keytool -list -v -keystore $CLIENT_TRUSTSTORE -storepass $WALLET_PWD -storetype PKCS12
+
+echoDebug "END >>> Create Truststore"
 
 # PART 5: Configure server network
 ## Overwrite to sqlnet.ora
