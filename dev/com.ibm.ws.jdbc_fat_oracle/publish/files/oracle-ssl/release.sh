@@ -4,7 +4,7 @@
 USER_NAME=kyleaure
 
 #Version of docker image.  Increment if doing a new release
-VERSION=2.0
+VERSION=2.1
 
 #Name of the final image
 IMAGE_NAME=oracle-ssl-18.4.0-xe-prebuilt
@@ -25,26 +25,25 @@ SECURITY_DIR=../../servers/com.ibm.ws.jdbc.fat.oracle.ssl/security/
 STORE_DIR=../../servers/com.ibm.ws.jdbc.fat.oracle.ssl/store/
 CONTAINER="TMP-CONTAINER"
 
-mkdir -p $SECURITY_DIR
-mkdir -p $STORE_DIR
+rm -rf $SECURITY_DIR && mkdir -p $SECURITY_DIR
+rm -rf $STORE_DIR && mkdir -p $STORE_DIR
 
 docker create --name $CONTAINER $SIGNATURE
 docker cp $CONTAINER:/client/oracle/wallet/ewallet.p12 $SECURITY_DIR
 docker cp $CONTAINER:/client/oracle/wallet/cwallet.sso $SECURITY_DIR
-docker cp $CONTAINER:/client/oracle/store/client-keystore.jks $STORE_DIR
-docker cp $CONTAINER:/client/oracle/store/client-truststore.jks $STORE_DIR
+docker cp $CONTAINER:/client/oracle/store/client-keystore.p12   $STORE_DIR
 docker rm $CONTAINER
 
 #Make security files readable
 chmod -R 755 $SECURITY_DIR
 chmod -R 755 $STORE_DIR
 
-#Push image to DockerHub
-docker push "$SIGNATURE"
+# #Push image to DockerHub
+# docker push "$SIGNATURE"
 
-#Add a comment to the Dockerfile and script
-sed -i '' -e '/.*Currently tagged in DockerHub as.*/d' *Dockerfile
-cat << EOF >> *Dockerfile
+# #Add a comment to the Dockerfile and script
+# sed -i '' -e '/.*Currently tagged in DockerHub as.*/d' *Dockerfile
+# cat << EOF >> *Dockerfile
 
-# Currently tagged in DockerHub as: $SIGNATURE
-EOF
+# # Currently tagged in DockerHub as: $SIGNATURE
+# EOF

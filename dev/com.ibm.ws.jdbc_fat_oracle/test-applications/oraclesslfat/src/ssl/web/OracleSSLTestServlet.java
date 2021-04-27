@@ -31,8 +31,8 @@ public class OracleSSLTestServlet extends FATServlet {
     @Resource(lookup = "jdbc/oracleWallet")
     private DataSource ds_oracle_wallet;
 
-//    @Resource(lookup = "jdbc/oraclejks")
-//    private DataSource ds_oracle_jks;
+    @Resource(lookup = "jdbc/oracle-keystore")
+    private DataSource ds_oracle_keystore;
 
     @Test
     public void testSimpleConnection() throws Exception {
@@ -48,11 +48,10 @@ public class OracleSSLTestServlet extends FATServlet {
         }
     }
 
-    //TODO need to resolve handshake failure
-//    @Test
-//    public void testOracleJKS() throws Exception {
-//        try (Connection con = ds_oracle_jks.getConnection(); Statement stmt = con.createStatement()) {
-//            stmt.execute("SELECT 1 FROM DUAL");
-//        }
-//    }
+    @Test
+    public void testOracleKeyStore() throws Exception {
+        try (Connection con = ds_oracle_keystore.getConnection(); Statement stmt = con.createStatement()) {
+            stmt.execute("SELECT 1 FROM DUAL");
+        }
+    }
 }

@@ -21,28 +21,37 @@ fi
 WALLET_PWD="WalletPasswd123"
 DN="CN=localhost"
 
+JAVA_HOME=/opt/oracle/product/18c/dbhomeXE/jdk
+export PATH=$JAVA_HOME/bin:$PATH
+
 #PART 1: Creating server wallet and cert
 SERVER_WALLET="/u01/app/oracle/wallet"
 SERVER_CERT="/tmp/oracle-server-certificate.crt"
+SERVER_KEY="/tmp/oracle-server-key.pem"
 echoDebug "START >>> Creating server wallet and cert"
 mkdir -p /u01/app/oracle/wallet
 orapki wallet create  -wallet $SERVER_WALLET -pwd $WALLET_PWD -auto_login
 orapki wallet add     -wallet $SERVER_WALLET -pwd $WALLET_PWD -dn $DN -keysize 1024 -self_signed -validity 36500
 orapki wallet display -wallet $SERVER_WALLET -pwd $WALLET_PWD
 orapki wallet export  -wallet $SERVER_WALLET -pwd $WALLET_PWD -dn $DN -cert $SERVER_CERT
+openssl pkcs12 -in $SERVER_WALLET/ewallet.p12 -nocerts -out $SERVER_KEY -passin pass:$WALLET_PWD -passout pass:$WALLET_PWD
 orapki cert display -cert $SERVER_CERT -complete
+cat $SERVER_KEY
 echoDebug "DONE >>> Creating server wallet and cert"
 
 #PART 2: Create a Client Wallet and Certificate
 CLIENT_WALLET="/client/oracle/wallet"
 CLIENT_CERT="/tmp/oracle-client-certificate.crt"
+CLIENT_KEY="/tmp/oracle-client-key.pem"
 echoDebug "START >>> Create client wallet and cert"
 mkdir -p /client/oracle/wallet
 orapki wallet create  -wallet $CLIENT_WALLET -pwd $WALLET_PWD -auto_login
 orapki wallet add     -wallet $CLIENT_WALLET -pwd $WALLET_PWD -dn $DN -keysize 1024 -self_signed -validity 36500
 orapki wallet display -wallet $CLIENT_WALLET -pwd $WALLET_PWD
 orapki wallet export  -wallet $CLIENT_WALLET -pwd $WALLET_PWD -dn $DN -cert $CLIENT_CERT
+openssl pkcs12 -in $CLIENT_WALLET/ewallet.p12 -nocerts -out $CLIENT_KEY -passin pass:$WALLET_PWD -passout pass:$WALLET_PWD
 orapki cert display -cert $CLIENT_CERT -complete
+cat $CLIENT_KEY
 echoDebug "DONE >>> Create client wallet and cert"
 
 # PART 3: Exchange Client and Server Certificates
@@ -57,16 +66,19 @@ echoDebug "DONE >>> Exchanging certs"
 chown -R oracle:oinstall $SERVER_WALLET
 chown -R oracle:oinstall $CLIENT_WALLET
 
-# PART 4: Create JKS wallet from oracle wallet
-echoDebug "START >>> Create JKS wallet"
-CLIENT_KEYSTORE="/client/oracle/store/client-keystore.jks"
-CLIENT_TRUSTSTORE="/client/oracle/store/client-truststore.jks"
+# PART 4: Create PKCS12 wallet from oracle wallet
+echoDebug "START >>> Create Keystore"
+CLIENT_KEYSTORE="/client/oracle/store/client-keystore.p12"
+
 mkdir -p /client/oracle/store
-orapki wallet pkcs12_to_jks \
-  -wallet $CLIENT_WALLET/ewallet.p12 -pwd $WALLET_PWD \
-  -jksKeyStoreLoc   $CLIENT_KEYSTORE   -jksKeyStorepwd $WALLET_PWD \
-  -jksTrustStoreLoc $CLIENT_TRUSTSTORE -jksTrustStorepwd $WALLET_PWD
-echoDebug "DONE >>> Create JKS wallet"
+
+openssl pkcs12 -export -in $CLIENT_CERT -inkey $CLIENT_KEY -out $CLIENT_KEYSTORE -name "client" -passin pass:$WALLET_PWD -passout pass:$WALLET_PWD
+keytool -noprompt -import -trustcacerts -file $SERVER_CERT -keystore $CLIENT_KEYSTORE -alias SERVER -storepass $WALLET_PWD -storetype PKCS12
+keytool -list -v -keystore $CLIENT_KEYSTORE -storepass $WALLET_PWD -storetype PKCS12
+
+rm -rf /tmp/
+
+echoDebug "END >>> Create Keystore"
 
 # PART 5: Configure server network
 ## Overwrite to sqlnet.ora

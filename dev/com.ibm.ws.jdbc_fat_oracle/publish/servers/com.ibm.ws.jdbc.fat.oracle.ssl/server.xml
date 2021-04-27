@@ -45,20 +45,15 @@
     </dataSource>
     
     <!-- Datasource using keystore/truststore for ssl connection -->
-<!-- 	TODO handshake fails:
-	[3/15/21, 10:26:49:829 CDT] 0000004c id=00000000 SystemErr                                                    R javax.net.ssl|DEBUG|4C|Default Executor-thread-20|2021-03-15 10:26:49.829 CDT|CertificateMessage.java:290|No X.509 certificate for client authentication, use empty Certificate message instead
-	[3/15/21, 10:26:49:830 CDT] 0000004c id=00000000 SystemErr                                                    R javax.net.ssl|DEBUG|4C|Default Executor-thread-20|2021-03-15 10:26:49.830 CDT|CertificateMessage.java:321|Produced client Certificate handshake message (
-	"Certificates": <empty list> --> 
-<!-- 	
-    <variable name="oracle.keystore"			value="javax.net.ssl.keystore=${server.config.dir}/store/client-keystore.jks;javax.net.ssl.trustStoreType=JKS;javax.net.ssl.keyStorePassword=${env.WALLET_PASS};"/>
-    <variable name="oracle.truststore"		  	value="javax.net.ssl.trustStore=${server.config.dir}/store/client-truststore.jks;javax.net.ssl.trustStoreType=JKS;javax.net.ssl.trustStorePassword=${env.WALLET_PASS};"/>
-    <variable name="oracle.conn.props.jks"      value="${oracle.conn.props}${oracle.truststore}${oracle.keystore}" />
+	<variable name="oracle.keystore"			value="javax.net.ssl.keystore=${server.config.dir}/store/client-keystore.p12;javax.net.ssl.trustStoreType=PKCS12;javax.net.ssl.keyStorePassword=${env.WALLET_PASS};"/>
+    <variable name="oracle.truststore"		  	value="javax.net.ssl.trustStore=${server.config.dir}/store/client-keystore.p12;javax.net.ssl.trustStoreType=PKCS12;javax.net.ssl.trustStorePassword=${env.WALLET_PASS};"/>
+    <variable name="oracle.conn.props.keystore"      value="${oracle.conn.props}${oracle.keystore}${oracle.truststore}" />
     
-    <dataSource id="oraclejks" jndiName="jdbc/oraclejks">
+    <dataSource id="oracle-keystore" jndiName="jdbc/oracle-keystore">
     	<jdbcDriver libraryRef="DBLib"/>
-    	<properties.oracle URL="${env.SSL_URL}" connectionProperties="${oracle.conn.props.jks}" />
+    	<properties.oracle URL="${env.SSL_URL}" connectionProperties="${oracle.conn.props.keystore}" />
     </dataSource>
-     -->
+
     <javaPermission codebase="${shared.resource.dir}/ssl/ojdbc8_g.jar" className="java.security.AllPermission"/>
     <javaPermission codebase="${server.config.dir}/apps/oraclesslfat.war" className="java.lang.RuntimePermission" name="accessDeclaredMembers"/>
 
