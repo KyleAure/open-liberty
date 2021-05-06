@@ -66,8 +66,14 @@ public class SQLServerTestServlet extends FATServlet {
     @Resource(lookup = "jdbc/ss-using-driver-type")
     private DataSource ss_using_driver_type;
 
-    @Resource(lookup = "jdbc/sqlserver-ssl")
+    @Resource(lookup = "jdbc/ss-ssl-unsecure")
+    DataSource unSecureDs;
+
+    @Resource(lookup = "jdbc/ss-ssl-secure")
     DataSource secureDs;
+
+    @Resource(lookup = "jdbc/ss-ssl-secure-native")
+    DataSource secureNativeDs;
 
     @Resource(name = "java:comp/jdbc/env/unsharable-ds-xa-loosely-coupled", shareable = false)
     private DataSource unsharable_ds_xa_loosely_coupled;
@@ -328,9 +334,23 @@ public class SQLServerTestServlet extends FATServlet {
     }
 
     @Test
-    public void testDatasourceWithSSL() throws Exception {
+    public void testDatasourceWithSSLUnsecure() throws Exception {
+        try (Connection con = unSecureDs.getConnection()) {
+            System.out.println("Got unsecure connection with SSL");
+        }
+    }
+
+    @Test
+    public void testDatasourceWithSSLSecure() throws Exception {
         try (Connection con = secureDs.getConnection()) {
-            System.out.println("Got connection with SSL");
+            System.out.println("Got secure connection with SSL");
+        }
+    }
+
+    @Test
+    public void testDatasourceWithSSLSecureNative() throws Exception {
+        try (Connection con = secureNativeDs.getConnection()) {
+            System.out.println("Got secure native connection with SSL");
         }
     }
 

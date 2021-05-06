@@ -22,7 +22,6 @@
       <properties.postgresql serverName="${env.POSTGRES_HOST}" portNumber="${env.POSTGRES_PORT}" databaseName="${env.POSTGRES_DB}" user="${env.POSTGRES_USER}" password="${env.POSTGRES_PASS}"
                              ssl="true"
                              sslKey="${server.config.dir}/resources/security/outboundKeys.p12"
-                             sslRootCert="${server.config.dir}/resources/security/server.crt"
                              sslMode="verify-ca"/>
     </dataSource>
     

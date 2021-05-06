@@ -45,6 +45,7 @@ public class SQLServerTest extends FATServletClient {
         server.addEnvVar("PORT", Integer.toString(sqlserver.getFirstMappedPort()));
         server.addEnvVar("USER", sqlserver.getUsername());
         server.addEnvVar("PASSWORD", sqlserver.getPassword());
+        server.addEnvVar("TRUSTSTORE_PASS", "WalletPasswd123");
 
         // Create a normal Java EE application and export to server
         ShrinkHelper.defaultApp(server, APP_NAME, "web");
