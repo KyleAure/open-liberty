@@ -19,14 +19,30 @@ echo "Attempting to build and push $SIGNITURE"
 docker login || (echo "Unable to login to DockerHub" && exit 1)
 
 #This script assumes it is in the same directory as the Dockerfile
-docker build -t "$SIGNITURE" .
+# docker build -t "$SIGNITURE" .
 
-#Push image to DockerHub
-docker push "$SIGNITURE"
+#Extract keystore
+CONTAINER="tmp-container"
+SECURITY_DIR=../../servers/com.ibm.ws.jdbc.fat.sqlserver/security/
+PASSWORD="WalletPasswd123"
 
-#Add a comment to the Dockerfile and script
-sed -i '' -e '/.*Currently tagged in DockerHub as.*/d' *Dockerfile
-cat << EOF >> *Dockerfile
+rm -rf $SECURITY_DIR && mkdir -p $SECURITY_DIR
 
-# Currently tagged in DockerHub as: $SIGNITURE
-EOF
+docker create --name $CONTAINER $SIGNITURE
+docker cp $CONTAINER:/etc/ssl/certs/mssql.pem $SECURITY_DIR
+docker cp $CONTAINER:/etc/ssl/mssql.key $SECURITY_DIR
+docker rm $CONTAINER
+
+keytool -importcert -file $SECURITY_DIR/mssql.pem -alias server -keystore $SECURITY_DIR/truststore.p12 -storepass  $PASSWORD -storetype PKCS12
+keytool -list -v -keystore $SECURITY_DIR/truststore.p12 -storepass $PASSWORD
+rm $SECURITY_DIR/mssql.pem $SECURITY_DIR/mssql.key
+
+# #Push image to DockerHub
+# docker push "$SIGNITURE"
+
+# #Add a comment to the Dockerfile and script
+# sed -i '' -e '/.*Currently tagged in DockerHub as.*/d' *Dockerfile
+# cat << EOF >> *Dockerfile
+
+# # Currently tagged in DockerHub as: $SIGNITURE
+# EOF

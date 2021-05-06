@@ -31,6 +31,9 @@
   <library id="SQLServerLibAnon">
     <fileset dir="${shared.resource.dir}/sqlserver" includes="anomyous.jar"/>
   </library>
+  
+  <authData id="dbAuth" user="${env.USER}" password="${env.PASSWORD}"/>
+  <jdbcDriver id="sqlServerDriver" libraryRef="SQLServerLibAnon"/>
     
   <dataSource id="DefaultDataSource" enableBranchCouplingExtension="true"><!-- TODO remove attribute once GA -->
     <jdbcDriver libraryRef="SQLServerLibAnon"/>
@@ -40,11 +43,25 @@
     <recoveryAuthData user="${env.USER}" password="${env.PASSWORD}"/>
   </dataSource>
   
-  <dataSource jndiName="jdbc/sqlserver-ssl">
-    <jdbcDriver libraryRef="SQLServerLibAnon"/>
+  <!-- Option 0: Always trust server -->
+  <dataSource jndiName="jdbc/ss-ssl-unsecure" jdbcDriverRef="sqlServerDriver" containerAuthDataRef="dbAuth">
     <properties.microsoft.sqlserver databaseName="${env.DBNAME}" serverName="${env.HOST}" portNumber="${env.PORT}"
                 encrypt="true" trustServerCertificate="true"/>
-    <containerAuthData user="${env.USER}" password="${env.PASSWORD}"/>
+  </dataSource>
+  
+  <!-- Option 1: Trust using jdk keystore -->
+  <keyStore id="defaultTrustStore" location="security/truststore.p12" password="${TRUSTSTORE_PASS}" />
+  
+  <dataSource jndiName="jdbc/ss-ssl-secure-native" jdbcDriverRef="sqlServerDriver" containerAuthDataRef="dbAuth">
+    <properties.microsoft.sqlserver databaseName="${env.DBNAME}" serverName="${env.HOST}" portNumber="${env.PORT}"
+                encrypt="true" hostNameInCertificate="localhost"/>
+  </dataSource>
+  
+  <!-- Option 2: Trust using driver configured truststore -->
+  <dataSource jndiName="jdbc/ss-ssl-secure" jdbcDriverRef="sqlServerDriver" containerAuthDataRef="dbAuth">
+    <properties.microsoft.sqlserver databaseName="${env.DBNAME}" serverName="${env.HOST}" portNumber="${env.PORT}"
+                encrypt="true" hostNameInCertificate="localhost"
+                trustStore="security/truststore.p12" trustStorePassword="${TRUSTSTORE_PASS}" />
   </dataSource>
 
   <dataSource jndiName="jdbc/ss" isolationLevel="TRANSACTION_SNAPSHOT">
