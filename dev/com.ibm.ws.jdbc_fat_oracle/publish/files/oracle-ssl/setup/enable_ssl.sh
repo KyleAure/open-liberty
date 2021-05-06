@@ -34,7 +34,6 @@ orapki wallet create  -wallet $SERVER_WALLET -pwd $WALLET_PWD -auto_login
 orapki wallet add     -wallet $SERVER_WALLET -pwd $WALLET_PWD -dn $DN -keysize 1024 -self_signed -validity 36500
 orapki wallet display -wallet $SERVER_WALLET -pwd $WALLET_PWD
 orapki wallet export  -wallet $SERVER_WALLET -pwd $WALLET_PWD -dn $DN -cert $SERVER_CERT
-openssl pkcs12 -in $SERVER_WALLET/ewallet.p12 -nocerts -out $SERVER_KEY -passin pass:$WALLET_PWD -passout pass:$WALLET_PWD
 orapki cert display -cert $SERVER_CERT -complete
 cat $SERVER_KEY
 echoDebug "DONE >>> Creating server wallet and cert"
@@ -49,7 +48,6 @@ orapki wallet create  -wallet $CLIENT_WALLET -pwd $WALLET_PWD -auto_login
 orapki wallet add     -wallet $CLIENT_WALLET -pwd $WALLET_PWD -dn $DN -keysize 1024 -self_signed -validity 36500
 orapki wallet display -wallet $CLIENT_WALLET -pwd $WALLET_PWD
 orapki wallet export  -wallet $CLIENT_WALLET -pwd $WALLET_PWD -dn $DN -cert $CLIENT_CERT
-openssl pkcs12 -in $CLIENT_WALLET/ewallet.p12 -nocerts -out $CLIENT_KEY -passin pass:$WALLET_PWD -passout pass:$WALLET_PWD
 orapki cert display -cert $CLIENT_CERT -complete
 cat $CLIENT_KEY
 echoDebug "DONE >>> Create client wallet and cert"
@@ -69,12 +67,24 @@ chown -R oracle:oinstall $CLIENT_WALLET
 # PART 4: Create PKCS12 wallet from oracle wallet
 echoDebug "START >>> Create Keystore"
 CLIENT_KEYSTORE="/client/oracle/store/client-keystore.p12"
+CLIENT_TRUSTSTORE="/client/oracle/store/client-truststore.p12"
 
 mkdir -p /client/oracle/store
 
-openssl pkcs12 -export -in $CLIENT_CERT -inkey $CLIENT_KEY -out $CLIENT_KEYSTORE -name "client" -passin pass:$WALLET_PWD -passout pass:$WALLET_PWD
-keytool -noprompt -import -trustcacerts -file $SERVER_CERT -keystore $CLIENT_KEYSTORE -alias SERVER -storepass $WALLET_PWD -storetype PKCS12
-keytool -list -v -keystore $CLIENT_KEYSTORE -storepass $WALLET_PWD -storetype PKCS12
+openssl pkcs12         -in $CLIENT_WALLET/ewallet.p12  -out /tmp/client.pem -nokeys  -passin pass:$WALLET_PWD
+openssl pkcs12 -nodes  -in $CLIENT_WALLET/ewallet.p12  -out /tmp/client.key -nocerts -passin pass:$WALLET_PWD
+
+openssl pkcs12         -in $SERVER_WALLET/ewallet.p12  -out /tmp/server.pem -nokeys  -passin pass:$WALLET_PWD
+openssl x509 -trustout -in /tmp/server.pem -out /tmp/server-trusted.pem  -passin pass:$WALLET_PWD
+
+openssl pkcs12 -export -name orakey \
+                       -in  /tmp/client.pem -inkey /tmp/client.key -passin  pass:$WALLET_PWD \
+                       -out $CLIENT_KEYSTORE                       -passout pass:$WALLET_PWD
+keytool -import -noprompt -alias server -trustcacerts \
+                       -file /tmp/server-trusted.pem -keystore $CLIENT_TRUSTSTORE  -storepass $WALLET_PWD
+
+keytool --list -v -keystore $CLIENT_KEYSTORE -storepass $WALLET_PWD
+keytool --list -v -keystore $CLIENT_TRUSTSTORE -storepass $WALLET_PWD
 
 rm -rf /tmp/
 

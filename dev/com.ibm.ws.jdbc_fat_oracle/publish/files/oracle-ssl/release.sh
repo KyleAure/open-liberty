@@ -31,7 +31,7 @@ rm -rf $STORE_DIR && mkdir -p $STORE_DIR
 docker create --name $CONTAINER $SIGNATURE
 docker cp $CONTAINER:/client/oracle/wallet/ewallet.p12 $SECURITY_DIR
 docker cp $CONTAINER:/client/oracle/wallet/cwallet.sso $SECURITY_DIR
-docker cp $CONTAINER:/client/oracle/store/client-keystore.p12   $STORE_DIR
+docker cp $CONTAINER:/client/oracle/store/ $STORE_DIR
 docker rm $CONTAINER
 
 #Make security files readable

@@ -45,8 +45,8 @@
     </dataSource>
     
     <!-- Datasource using keystore/truststore for ssl connection -->
-	<variable name="oracle.keystore"			value="javax.net.ssl.keystore=${server.config.dir}/store/client-keystore.p12;javax.net.ssl.trustStoreType=PKCS12;javax.net.ssl.keyStorePassword=${env.WALLET_PASS};"/>
-    <variable name="oracle.truststore"		  	value="javax.net.ssl.trustStore=${server.config.dir}/store/client-keystore.p12;javax.net.ssl.trustStoreType=PKCS12;javax.net.ssl.trustStorePassword=${env.WALLET_PASS};"/>
+	<variable name="oracle.keystore"			value="javax.net.ssl.keystore=${server.config.dir}/store/client-keystore.p12;javax.net.ssl.keyStoreType=pkcs12;javax.net.ssl.keyStorePassword=${env.WALLET_PASS};"/>
+    <variable name="oracle.truststore"		  value="javax.net.ssl.trustStore=${server.config.dir}/store/client-truststore.p12;javax.net.ssl.trustStoreType=jks;javax.net.ssl.trustStorePassword=${env.WALLET_PASS};"/>
     <variable name="oracle.conn.props.keystore"      value="${oracle.conn.props}${oracle.keystore}${oracle.truststore}" />
     
     <dataSource id="oracle-keystore" jndiName="jdbc/oracle-keystore">
