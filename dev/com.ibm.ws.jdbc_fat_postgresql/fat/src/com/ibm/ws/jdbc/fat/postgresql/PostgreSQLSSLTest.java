@@ -10,9 +10,6 @@
  *******************************************************************************/
 package com.ibm.ws.jdbc.fat.postgresql;
 
-import java.sql.Connection;
-import java.sql.Statement;
-
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.runner.RunWith;
@@ -83,12 +80,8 @@ public class PostgreSQLSSLTest extends FATServletClient {
         serverNativeSSL.addEnvVar("POSTGRES_PASS", POSTGRES_PASS);
         serverNativeSSL.addEnvVar("POSTGRES_URL", jdbcURL);
 
-        // Create tables for the DB
-        try (Connection conn = postgre.createConnection("")) {
-            Statement stmt = conn.createStatement();
-            stmt.execute("CREATE TABLE people( id integer UNIQUE NOT NULL, name VARCHAR (50) );");
-            stmt.close();
-        }
+        FATSuite.setupDatabase(postgre);
+
         serverLibertySSL.startServer();
         serverNativeSSL.useSecondaryHTTPPort();
         serverNativeSSL.startServer();
