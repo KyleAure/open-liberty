@@ -1,0 +1,26 @@
+#*******************************************************************************
+# Copyright (c) 2022 IBM Corporation and others.
+# All rights reserved. This program and the accompanying materials
+# are made available under the terms of the Eclipse Public License v1.0
+# which accompanies this distribution, and is available at
+# http://www.eclipse.org/legal/epl-v10.html
+#
+# Contributors:
+#     IBM Corporation - initial API and implementation
+#*******************************************************************************
+-include= ~../cnf/resources/bnd/bundle.props
+bVersion=1.0
+
+#This file defines the testSchedule-1.0 user feature bundle
+
+Bundle-Name: TestSchedule
+Bundle-SymbolicName: test.connector.schedule; singleton:=true
+Bundle-Description: Connector Schedule Test Bundle; version=${bVersion}
+
+Private-Package: test.connector.schedule.internal;version=1.0
+
+Include-Resource:\
+ OSGI-INF/metatype/metatype.xml=test-bundles/testfeature/resources/OSGI-INF/metatype/metatype.xml
+
+-dsannotations: \
+  test.connector.schedule.internal.TestServiceImpl
