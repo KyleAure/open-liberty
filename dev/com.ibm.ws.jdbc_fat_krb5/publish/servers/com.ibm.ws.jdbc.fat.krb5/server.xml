@@ -25,7 +25,7 @@
     <properties.db2.jcc databaseName="${DB2_DBNAME}" serverName="${DB2_HOSTNAME}" portNumber="${DB2_PORT}"/>
   </dataSource>
   
-  <dataSource jndiName="jdbc/krb/xaRecovery" type="javax.sql.XADataSource" isolationLevel="TRANSACTION_SERIALIZABLE" 
+  <dataSource jndiName="jdbc/krb/xaRecovery" type="javax.sql.XADataSource" isolationLevel="TRANSACTION_READ_COMMITTED" 
               queryTimeout="2m" syncQueryTimeoutWithTransactionTimeout="true">
     <jdbcDriver libraryRef="DB2JCCLib" />
     <connectionManager agedTimeout="1s" connectionTimeout="10" maxIdleTime="1s" maxPoolSize="3" minPoolSize="0" reapTime="2s"/>

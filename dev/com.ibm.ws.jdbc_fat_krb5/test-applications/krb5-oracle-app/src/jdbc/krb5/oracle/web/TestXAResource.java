@@ -10,7 +10,7 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package jdbc.krb5.db2.web;
+package jdbc.krb5.oracle.web;
 
 import java.lang.reflect.Field;
 import java.sql.Connection;
@@ -41,9 +41,9 @@ public class TestXAResource implements XAResource {
     /**
      * Construct a wrapper for the specified XA resource.
      *
-     * @param xaRes        XA resource to wrap.
+     * @param xaRes XA resource to wrap.
      * @param successLimit limit of commits/rollbacks that should succeed for the group of
-     *                         XA resources before raising errors.
+     *            XA resources before raising errors.
      */
     private TestXAResource(XAResource xaRes, AtomicInteger successLimit) {
         this.xaRes = xaRes;
@@ -54,8 +54,8 @@ public class TestXAResource implements XAResource {
      * For a group of connections, replaces their XAResources with TestXAResource wrappers
      * and imposes a maximum of successful commits or rollbacks for the group as a whole.
      *
-     * @param newLimit    number of commits or rollbacks to allow before we simulate errors for
-     *                        XAResource.commit and XAResource.rollback.
+     * @param newLimit number of commits or rollbacks to allow before we simulate errors for
+     *            XAResource.commit and XAResource.rollback.
      * @param connections a list of WSJdbcConnection.
      */
     public static final void assignSuccessLimit(int newLimit, Connection... connections) throws Exception {

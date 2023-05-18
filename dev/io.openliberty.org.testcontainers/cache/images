@@ -16,8 +16,8 @@ kyleaure/db2-krb5:2.0
 kyleaure/db2-ssl:3.0
 kyleaure/db2:1.0
 kyleaure/krb5-server:1.0
-kyleaure/oracle-21.3.0-faststart:1.0.full.krb5
 kyleaure/oracle-21.3.0-faststart:1.0.full.ssl
+kyleaure/oracle-21.3.0-faststart:2.0.full.krb5
 kyleaure/postgres-krb5:1.0
 kyleaure/postgres-ssl:1.0
 kyleaure/postgres-test-table:3.0

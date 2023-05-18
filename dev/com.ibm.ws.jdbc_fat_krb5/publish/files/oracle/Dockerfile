@@ -32,4 +32,8 @@ RUN rm /opt/oracle/scripts/setup/2oracle.sh
  
 USER oracle
 
-# Currently tagged in DockerHub as: kyleaure/oracle-21.3.0-faststart:1.0.full.krb5
+
+
+
+
+# Currently tagged in DockerHub as: kyleaure/oracle-21.3.0-faststart:2.0.full.krb5

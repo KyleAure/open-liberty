@@ -52,6 +52,15 @@
     <properties.oracle databaseName="${ORACLE_DBNAME}" serverName="${ORACLE_HOSTNAME}" portNumber="${ORACLE_PORT}" driverType="thin"/>
     <containerAuthData user="${ORACLE_USER}" password="${ORACLE_PASS}"/>
   </dataSource>
+
+  <dataSource jndiName="jdbc/krb/xaRecovery" type="javax.sql.XADataSource"
+              queryTimeout="2m" syncQueryTimeoutWithTransactionTimeout="true">
+  	<jdbcDriver libraryRef="OracleLib"/>
+  	<connectionManager maxPoolSize="3"/>
+  	<properties.oracle URL="${oracle.url}"/>
+  	<containerAuthData user="${ORACLE_USER}" password="${ORACLE_PASS}"/>
+  	<recoveryAuthData krb5Principal="${KRB5_USER}"/>
+  </dataSource>
     
   <javaPermission className="javax.security.auth.kerberos.ServicePermission" name="*" actions="initiate"/>
   <javaPermission className="java.lang.RuntimePermission" name="getClassLoader"/>

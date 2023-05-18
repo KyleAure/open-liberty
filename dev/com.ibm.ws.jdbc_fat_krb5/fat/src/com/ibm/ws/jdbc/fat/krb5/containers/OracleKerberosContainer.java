@@ -29,7 +29,7 @@ public class OracleKerberosContainer extends OracleContainer {
     private static final Class<?> c = OracleKerberosContainer.class;
 
     // NOTE: If this is ever updated, don't forget to push to docker hub, but DO NOT overwrite existing versions
-    private static final String IMAGE_NAME_STRING = "kyleaure/oracle-21.3.0-faststart:1.0.full.krb5";
+    private static final String IMAGE_NAME_STRING = "kyleaure/oracle-21.3.0-faststart:2.0.full.krb5";
     private static final DockerImageName IMAGE_NAME = DockerImageName.parse(IMAGE_NAME_STRING).asCompatibleSubstituteFor("gvenzl/oracle-xe");
 
     public OracleKerberosContainer(Network network) {
