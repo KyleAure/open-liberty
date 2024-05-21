@@ -1234,7 +1234,7 @@ public class DataTestServlet extends FATServlet {
     /**
      * Find-and-delete repository operations that return one or more IDs, corresponding to removed entities.
      */
-    @SkipIfSysProp(DB_Oracle) // FIXME SELECT FOR UPDATE returns incorrect results. packages.deleteFirst < returns no results
+    @SkipIfSysProp(DB_Oracle) // TODO SELECT FOR UPDATE returns incorrect results. packages.deleteFirst < returns no results
     @Test
     public void testFindAndDeleteReturnsIds() throws Exception {
         String jdbcJarName = System.getenv().getOrDefault("DB_DRIVER", "UNKNOWN");
@@ -1312,7 +1312,7 @@ public class DataTestServlet extends FATServlet {
     @Test
     @SkipIfSysProp({
                      DB_DB2, //Failing on Db2 due to eclipselink issue.  OL Issue #28289
-                     DB_Oracle //FIXME SELECT FOR UPDATE returns incorrect results.  packages.destroy returns 70007
+                     DB_Oracle //TODO SELECT FOR UPDATE returns incorrect results.  packages.destroy returns 70007
     })
     public void testFindAndDeleteReturnsObjects() {
         String jdbcJarName = System.getenv().getOrDefault("DB_DRIVER", "UNKNOWN");
@@ -4639,7 +4639,7 @@ public class DataTestServlet extends FATServlet {
      * Obtain total counts of number of elements and pages when JPQL is supplied via the Query annotation
      * where a count query is inferred from the Query annotation value, which has an ORDER BY clause.
      */
-    @SkipIfSysProp(DB_Oracle) //SQLSyntaxErrorException ORA-00918: LENGTH(ROMANNUMERAL): column ambiguously specified - appears in  and
+    @SkipIfSysProp(DB_Oracle) //TODO SQLSyntaxErrorException ORA-00918: LENGTH(ROMANNUMERAL): column ambiguously specified - appears in  and
     // Call: SELECT * FROM (SELECT a.*, ROWNUM rnum  FROM (SELECT DISTINCT LENGTH(ROMANNUMERAL), LENGTH(ROMANNUMERAL) FROM WLPPrime WHERE (NUMBERID <= ?) ORDER BY LENGTH(ROMANNUMERAL) DESC) a WHERE ROWNUM <= ?) WHERE rnum > ?
     @Test
     public void testTotalCountsForQueryWithOrderBy() {

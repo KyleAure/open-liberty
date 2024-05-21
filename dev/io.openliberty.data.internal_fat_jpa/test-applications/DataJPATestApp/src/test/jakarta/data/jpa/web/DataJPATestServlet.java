@@ -623,7 +623,7 @@ public class DataJPATestServlet extends FATServlet {
         cityNames.add("Mitchell");
         cityNames.add("Pierre");
 
-        //FIXME SELECT FOR UPDATE seems to return incorrect results deleteFirst3ByStateName returns no results
+        //TODO SELECT FOR UPDATE seems to return incorrect results deleteFirst3ByStateName returns no results
         // Provided eclipse link with this query:     eclipselink.ps.query   3 Execute query ReportQuery(referenceClass=City sql="SELECT NAME, STATENAME FROM WLPCity WHERE (STATENAME = ?) ORDER BY NAME")
         // EclipseLink sent query to Oracle:          eclipselink.ps.sql     3 SELECT NAME AS a1, STATENAME AS a2 FROM WLPCity WHERE (STATENAME = ?) AND (STATENAME,NAME) IN (SELECT null,null FROM (SELECT null,null, ROWNUM rnum  FROM (SELECT NAME AS a1, STATENAME AS a2 FROM WLPCity WHERE (STATENAME = ?) ORDER BY null,null) WHERE ROWNUM <= ?) WHERE rnum > ? )  ORDER BY NAME FOR UPDATE
         if (jdbcJarName.startsWith("ojdbc8_g")) {
@@ -1259,7 +1259,7 @@ public class DataJPATestServlet extends FATServlet {
         o7.purchasedOn = OffsetDateTime.now();
         o7.total = 70.99f;
 
-        // FIXME SQLServer throws com.microsoft.sqlserver.jdbc.SQLServerException: Violation of PRIMARY KEY constraint ...
+        // TODO SQLServer throws com.microsoft.sqlserver.jdbc.SQLServerException: Violation of PRIMARY KEY constraint ...
         // which is not a subset of SQLIntegrityConstraintViolationException
         // we are not correctly parsing this exception to re-throw as EntityExistsException
         // Related issue: https://github.com/microsoft/mssql-jdbc/issues/1199
