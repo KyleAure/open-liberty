@@ -25,7 +25,7 @@ fat.project: true
 fat.test.databases: true
 
 tested.features: \
-  checkpoint
+  checkpoint, cdi-4.1
 
 # Uncomment to use remote docker host to simulate continuous build behavior.
 #fat.test.use.remote.docker: true

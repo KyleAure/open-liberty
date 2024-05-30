@@ -1,0 +1,10 @@
+<server>
+    <featureManager>
+        <feature>data-1.0</feature>
+        <feature>persistence-3.2</feature>
+    </featureManager>
+    
+   <application location="DataJPATestApp.war">
+    <classloader commonLibraryRef="DerbyLib"/>
+  </application>
+</server>

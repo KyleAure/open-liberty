@@ -6532,7 +6532,8 @@ public class LibertyServer implements LogMonitorClient {
 
         if (currentState != state) {
             if (throwExceptionOnAppStateError()) {
-                throw new RuntimeException("Timed out waiting for " + appName + " to be in state " + state + ". Actual state: " + currentState + ", Last log message:" + lastMessage);
+                throw new RuntimeException("Timed out waiting for " + appName + " to be in state " + state + ". Actual state: " + currentState + ", Last log message:"
+                                           + lastMessage);
             } else {
                 Log.info(c, "waitForAppState", "Application " + appName + " did not reach " + state + " in " + waited + "ms");
             }

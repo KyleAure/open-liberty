@@ -12,6 +12,7 @@
  *******************************************************************************/
 package test.jakarta.data.jpa;
 
+import org.jboss.shrinkwrap.api.asset.StringAsset;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -20,6 +21,7 @@ import org.junit.runner.RunWith;
 import org.testcontainers.containers.JdbcDatabaseContainer;
 
 import com.ibm.websphere.simplicity.ShrinkHelper;
+import com.ibm.websphere.simplicity.ShrinkHelper.DeployOptions;
 
 import componenttest.annotation.MinimumJavaLevel;
 import componenttest.annotation.Server;
@@ -47,12 +49,67 @@ public class DataJPATest extends FATServletClient {
         // Get driver type
         DatabaseContainerType type = DatabaseContainerType.valueOf(testContainer);
         server.addEnvVar("DB_DRIVER", type.getDriverName());
+        server.addEnvVar("REPEAT_PHASE", FATSuite.repeatPhase);
 
         // Set up server DataSource properties
         DatabaseContainerUtil.setupDataSourceDatabaseProperties(server, testContainer);
 
         WebArchive war = ShrinkHelper.buildDefaultApp("DataJPATestApp", "test.jakarta.data.jpa.web");
-        ShrinkHelper.exportAppToServer(server, war);
+
+        if (FATSuite.RepeatWithJPA32.isActive()) {
+            //Generated classes that depend on hibernate
+            //No easy way to automate the removal of generated classes when running against eclipselink
+            //beacuse @Generated is not a runtime annotation.
+            war.deleteClass(test.jakarta.data.jpa.web.Manufacturers_.class);
+            war.deleteClass(test.jakarta.data.jpa.web.WorkAddresses_.class);
+            war.deleteClass(test.jakarta.data.jpa.web.Models_.class);
+        }
+
+        if (FATSuite.RepeatWithJPA32Hibernate.isActive()) {
+            //TODO the DataContainer feature should configure @Repository as a bean defining annotation, once created remove this.
+            String beansContent = """
+                            <?xml version="1.0" encoding="UTF-8"?>
+                            <beans xmlns="https://jakarta.ee/xml/ns/jakartaee"
+                              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                              xsi:schemaLocation="https://jakarta.ee/xml/ns/jakartaee https://jakarta.ee/xml/ns/jakartaee/beans_4_1.xsd"
+                              version="4.1"
+                              bean-discovery-mode="all">
+                            </beans>
+                            """;
+
+            war.addAsWebInfResource(new StringAsset(beansContent), "beans.xml");
+
+            //Create a persistence unit for Hibernate
+            String persistenceContent = """
+                            <?xml version="1.0" encoding="UTF-8"?>
+                            <persistence
+                              xmlns="https://jakarta.ee/xml/ns/persistence"
+                              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                              xsi:schemaLocation="https://jakarta.ee/xml/ns/persistence
+                              https://jakarta.ee/xml/ns/persistence/persistence_3_2.xsd"
+                              version="3.2">
+
+                              <persistence-unit name="DEFAULT_PU_HIBERNATE">
+                                <provider>org.hibernate.jpa.HibernatePersistenceProvider</provider>
+                                <jta-data-source>java:comp/DefaultDataSource</jta-data-source>
+                                <properties>
+                                      <property name="jakarta.persistence.schema-generation.database.action" value="drop-and-create" />
+                                </properties>
+                              </persistence-unit>
+
+                              <persistence-unit name="DSD_PU_HIBERNATE">
+                                <provider>org.hibernate.jpa.HibernatePersistenceProvider</provider>
+                                <jta-data-source>java:module/jdbc/RepositoryDataStore</jta-data-source>
+                                <properties>
+                                      <property name="jakarta.persistence.schema-generation.database.action" value="drop-and-create" />
+                                </properties>
+                              </persistence-unit>
+                            </persistence>
+                            """;
+            war.addAsManifestResource(new StringAsset(persistenceContent), "persistence.xml");
+        }
+
+        ShrinkHelper.exportAppToServer(server, war, DeployOptions.OVERWRITE);
         server.startServer();
     }
 

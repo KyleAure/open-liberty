@@ -14,13 +14,13 @@
 
   <featureManager>
     <feature>componenttest-2.0</feature>
-    <feature>data-1.0</feature>
     <feature>jndi-1.0</feature>
-    <feature>persistence-3.1</feature>
-    <feature>servlet-6.0</feature>
+	<!-- Persistence feature is included via test repeat (eclipselink or hibernate) -->
+    <feature>servlet-6.1</feature>
   </featureManager>
 
   <include location="../fatTestPorts.xml"/>
+  <include location="${shared.config.dir}/${env.REPEAT_PHASE}"/>
 
   <applicationManager startTimeout="60s"/>
 

@@ -14,17 +14,13 @@
 
   <featureManager>
     <feature>componenttest-2.0</feature>
-    <feature>data-1.0</feature>
     <feature>jndi-1.0</feature>
-    <feature>persistence-3.1</feature>
-    <feature>servlet-6.0</feature>
+    <!-- Data + Persistence feature is included via test repeat (eclipselink or hibernate) -->
+    <feature>servlet-6.1</feature>
   </featureManager>
 
   <include location="../fatTestPorts.xml"/>
-
-  <application location="DataJPATestApp.war">
-    <classloader commonLibraryRef="DerbyLib"/>
-  </application>
+  <include location="${shared.config.dir}/${env.REPEAT_PHASE}"/>
 
   <library id="DerbyLib">
     <file name="${shared.resource.dir}/derby/derby.jar"/>

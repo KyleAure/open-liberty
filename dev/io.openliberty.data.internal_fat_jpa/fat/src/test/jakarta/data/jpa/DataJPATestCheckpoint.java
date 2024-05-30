@@ -51,6 +51,7 @@ public class DataJPATestCheckpoint extends FATServletClient {
         // Get driver type
         DatabaseContainerType type = DatabaseContainerType.valueOf(testContainer);
         server.addEnvVar("DB_DRIVER", type.getDriverName());
+        server.addEnvVar("REPEAT_PHASE", FATSuite.repeatPhase);
 
         // Set up server DataSource properties
         DatabaseContainerUtil.setupDataSourceDatabaseProperties(server, testContainer);

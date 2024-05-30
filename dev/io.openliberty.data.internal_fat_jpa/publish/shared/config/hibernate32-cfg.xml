@@ -1,0 +1,32 @@
+<server>
+    <featureManager>
+        <!-- TODO - add the jakarta data container feature -->
+        <feature>persistenceContainer-3.2</feature>
+        <feature>xmlBinding-4.0</feature>
+        <feature>cdi-4.1</feature>
+    </featureManager>
+
+    <jpa defaultPersistenceProvider="org.hibernate.jpa.HibernatePersistenceProvider" />
+
+    <library id="HibernateLib">
+        <fileset dir="${shared.resource.dir}/jpa32_hibernate" includes="*.jar"/>
+    </library>
+    
+    <bell libraryRef="HibernateLib"/>
+    
+    <application location="DataJPATestApp.war">
+        <classloader commonLibraryRef="DerbyLib, HibernateLib"/>
+    </application>
+
+    <!-- Java 2 Security issue with ANTLR: https://github.com/antlr/antlr4/issues/3720 -->
+    <javaPermission className="java.lang.RuntimePermission" name="getenv.TURN_OFF_LR_LOOP_ENTRY_BRANCH_OPT"/>
+
+    <!-- TODO update these to the 6.6.0.Alpha1 dependencies -->
+    <javaPermission codebase="${shared.resource.dir}/jpa32_hibernate/antlr4-runtime-4.13.0.jar" className="java.security.AllPermission"/>
+    <javaPermission codebase="${shared.resource.dir}/jpa32_hibernate/byte-buddy-1.14.12.jar" className="java.security.AllPermission"/>
+    <javaPermission codebase="${shared.resource.dir}/jpa32_hibernate/classmate-1.5.1.jar" className="java.security.AllPermission"/>
+    <javaPermission codebase="${shared.resource.dir}/jpa32_hibernate/hibernate-commons-annotations-6.0.6.Final.jar" className="java.security.AllPermission"/>
+    <javaPermission codebase="${shared.resource.dir}/jpa32_hibernate/hibernate-core-6.6.0.Alpha1.jar" className="java.security.AllPermission"/>
+    <javaPermission codebase="${shared.resource.dir}/jpa32_hibernate/jandex-3.1.2.jar" className="java.security.AllPermission"/>
+    <javaPermission codebase="${shared.resource.dir}/jpa32_hibernate/jboss-logging-3.5.0.Final.jar" className="java.security.AllPermission"/>
+</server>
