@@ -12,11 +12,6 @@
  *******************************************************************************/
 package test.jakarta.data;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.OutputStream;
-import java.util.Collections;
-import java.util.Map;
 import java.util.Properties;
 
 import jakarta.enterprise.inject.build.compatible.spi.BuildCompatibleExtension;
@@ -79,12 +74,15 @@ public class DataTestCheckpoint extends FATServletClient {
                         .addAsLibrary(providerJar);
         ShrinkHelper.exportAppToServer(server, providerWar);
 
+        Properties envVars = new Properties();
+        envVars.put("DB_DRIVER", DatabaseContainerType.valueOf(testContainer).getDriverName());
+
         server.setCheckpoint(CheckpointPhase.AFTER_APP_START, false, null);
         server.startServer();
 
         //Server started, application started, checkpoint taken, server is now stopped.
         //Configure environment variable used by servlet
-        configureEnvVariable(server, Collections.singletonMap("DB_DRIVER", DatabaseContainerType.valueOf(testContainer).getDriverName()));
+        server.addEnvVarsForCheckpoint(envVars);
 
         server.checkpointRestore();
     }
@@ -92,14 +90,5 @@ public class DataTestCheckpoint extends FATServletClient {
     @AfterClass
     public static void tearDown() throws Exception {
         server.stopServer();
-    }
-
-    static void configureEnvVariable(LibertyServer server, Map<String, String> newEnv) throws Exception {
-        Properties serverEnvProperties = new Properties();
-        serverEnvProperties.putAll(newEnv);
-        File serverEnvFile = new File(server.getFileFromLibertyServerRoot("server.env").getAbsolutePath());
-        try (OutputStream out = new FileOutputStream(serverEnvFile)) {
-            serverEnvProperties.store(out, "");
-        }
     }
 }

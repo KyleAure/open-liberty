@@ -543,6 +543,19 @@ public class LibertyServer implements LogMonitorClient {
         return this;
     }
 
+    public void addEnvVarsForCheckpoint(Properties props) throws Exception {
+        File serverEnvFile;
+        if (fileExistsInLibertyServerRoot("server.env")) {
+            serverEnvFile = new File(getFileFromLibertyServerRoot("server.env").getAbsolutePath());
+        } else {
+            serverEnvFile = new File(getInstallRoot() + "/" + "server.env");
+            serverEnvFile.createNewFile();
+        }
+        try (OutputStream out = new FileOutputStream(serverEnvFile)) {
+            props.store(out, "");
+        }
+    }
+
     public static class CheckpointInfo {
         final Consumer<LibertyServer> defaultPreCheckpointLambda = (LibertyServer s) -> {
             Log.debug(c, "No preCheckpointLambda supplied.");
