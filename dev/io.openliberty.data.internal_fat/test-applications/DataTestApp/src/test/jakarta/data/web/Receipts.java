@@ -42,8 +42,10 @@ public interface Receipts extends CrudRepository<Receipt, Long> {
     @Query("SELECT COUNT(this)")
     long count();
 
+    //TODO 28636 not spec compliant (delete returns a boolean instead of a count)
     boolean deleteByTotalLessThan(float max);
 
+    //TODO 28636 not spec compliant (delete returns an entity instead of a count)
     Optional<Receipt> deleteByPurchaseId(long purchaseId);
 
     int deleteByPurchaseIdIn(Iterable<Long> ids);

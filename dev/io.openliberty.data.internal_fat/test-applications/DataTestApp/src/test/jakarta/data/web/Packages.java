@@ -50,16 +50,22 @@ public interface Packages extends BasicRepository<Package, Integer> {
     @Query("DELETE FROM Package")
     int deleteEverything();
 
+    //TODO 28636 not spec compliant (deleteFirst and delete returns an ID instead of a count)
     Optional<Integer> deleteFirst(Sort<Package> sort);
 
+    //TODO 28636 not spec compliant (deleteFirst and delete returns an ID instead of a count)
     int[] deleteFirst2(Sort<?>... sorts);
 
+    //TODO 28636 not spec compliant (deleteFirst and delete returns an entity instead of a count)
     LinkedList<?> deleteFirst2ByHeightLessThan(float maxHeight, Sort<?>... sorts);
 
+    //TODO 28636 not spec compliant (deleteFirst)
     long[] deleteFirst3(Sort<Package> sort); // invalid return type is not the entity or id
 
+    //TODO 28636 not spec compliant (deleteFirst)
     List<String> deleteFirst4(Sort<Package> sort); // invalid return type is not the entity or id
 
+    //TODO 28636 not spec compliant (deleteFirst)
     Collection<Number> deleteFirst5(Sort<Package> sort); // invalid return type is not the entity or id
 
     @Delete
