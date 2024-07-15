@@ -37,7 +37,7 @@ public interface Vehicles {
     //TODO 28636 not spec compliant (delete returns an entity instead of a count)
     List<Vehicle> deleteAll();
 
-    //TODO 28636 not spec compliant (deleteFirst and delete returns an entity instead of a count)
+    //TODO 28636 not spec compliant (deleteFirst and delete returns an entity instead of a count and delete uses OrderBy)
     List<Vehicle> deleteFirst2FoundOrderByPriceAscVinIdAsc();
 
     boolean exists();
