@@ -54,7 +54,7 @@ public interface Primes {
 
     Integer countByNumberIdBetween(long first, long last);
 
-    @Asynchronous
+    @Asynchronous //TODO 28636 not spec compliant (Asynchronous not in 1.0)
     CompletableFuture<Short> countByNumberIdBetweenAndEvenNot(long first, long last, boolean isOdd);
 
     long countByNumberIdLessThan(long number);
@@ -160,7 +160,7 @@ public interface Primes {
 
     CursoredPage<Prime> findByNumberIdLessThanOrderByEvenAscSumOfBitsAsc(long max, PageRequest pagination, Sort<Prime> sort);
 
-    @Asynchronous
+    @Asynchronous //TODO 28636 not spec compliant (Asynchronous not in 1.0)
     CompletionStage<CursoredPage<Prime>> findByNumberIdLessThanOrderByNumberIdDesc(long max, PageRequest pagination);
 
     Iterator<Prime> findByNumberIdNotGreaterThan(long max, Sort<?>... order);

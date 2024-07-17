@@ -55,10 +55,10 @@ public interface Receipts extends CrudRepository<Receipt, Long> {
 
     boolean existsByPurchaseId(long id);
 
-    @Asynchronous
+    @Asynchronous //TODO 28636 not spec compliant (Asynchronous not in 1.0)
     CompletableFuture<Receipt> findByPurchaseId(long purchaseId);
 
-    @Asynchronous
+    @Asynchronous //TODO 28636 not spec compliant (Asynchronous not in 1.0)
     CompletionStage<Optional<Receipt>> findByPurchaseIdIfPresent(long purchaseId);
 
     Stream<Receipt> findByPurchaseIdIn(Iterable<Long> ids);
@@ -66,7 +66,7 @@ public interface Receipts extends CrudRepository<Receipt, Long> {
     @OrderBy("purchaseId")
     Receipt[] forCustomer(String customer);
 
-    @Asynchronous
+    @Asynchronous //TODO 28636 not spec compliant (Asynchronous not in 1.0)
     CompletableFuture<List<Receipt>> forCustomer(String customer, Order<Receipt> sorts);
 
     Page<Receipt> forCustomer(String customer, PageRequest req, Order<Receipt> sorts);

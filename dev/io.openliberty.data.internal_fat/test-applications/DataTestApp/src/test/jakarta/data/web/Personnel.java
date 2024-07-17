@@ -36,45 +36,45 @@ import jakarta.enterprise.concurrent.Asynchronous;
  */
 @Repository
 public interface Personnel {
-    @Asynchronous
+    @Asynchronous //TODO 28636 not spec compliant (Asynchronous not in 1.0)
     @Query("UPDATE Person o SET o.lastName=?3 WHERE o.lastName=?1 AND o.ssn_id IN ?2")
     CompletionStage<Integer> changeSurnames(String oldSurname,
                                             List<Long> ssnList,
                                             String newSurname);
 
-    @Asynchronous
+    @Asynchronous //TODO 28636 not spec compliant (Asynchronous not in 1.0)
     CompletableFuture<Long> countByFirstNameStartsWith(String beginningOfFirstName);
 
-    @Asynchronous
+    @Asynchronous //TODO 28636 not spec compliant (Asynchronous not in 1.0)
     void deleteByFirstName(String firstName);
 
-    @Asynchronous
+    @Asynchronous //TODO 28636 not spec compliant (Asynchronous not in 1.0)
     @Delete
     CompletableFuture<Void> deleteById(@By(ID) long ssn);
 
-    @Asynchronous
+    @Asynchronous //TODO 28636 not spec compliant (Asynchronous not in 1.0)
     @Delete
     CompletableFuture<Void> deleteMultiple(Person... people);
 
-    @Asynchronous
+    @Asynchronous //TODO 28636 not spec compliant (Asynchronous not in 1.0)
     @Delete
     CompletableFuture<Integer> deleteSeveral(Stream<Person> people);
 
-    @Asynchronous
+    @Asynchronous //TODO 28636 not spec compliant (Asynchronous not in 1.0)
     CompletionStage<List<Person>> findByLastNameOrderByFirstName(String lastName);
 
-    @Asynchronous
+    @Asynchronous //TODO 28636 not spec compliant (Asynchronous not in 1.0)
     CompletableFuture<Person> findBySSN_Id(long ssn);
 
-    @Asynchronous
+    @Asynchronous //TODO 28636 not spec compliant (Asynchronous not in 1.0)
     @Query("SELECT o.firstName FROM Person o WHERE o.lastName=?1 ORDER BY o.firstName")
     CompletableFuture<Stream<String>> firstNames(String lastName);
 
-    @Asynchronous
+    @Asynchronous //TODO 28636 not spec compliant (Asynchronous not in 1.0)
     @Insert
     CompletableFuture<Void> insertAll(Person... people);
 
-    @Asynchronous
+    @Asynchronous //TODO 28636 not spec compliant (Asynchronous not in 1.0)
     @Query("SELECT DISTINCT o.lastName FROM Person o ORDER BY o.lastName")
     CompletionStage<String[]> lastNames();
 
@@ -85,18 +85,18 @@ public interface Personnel {
     // of the Paginated annotation, although this would rule out easily accessing the
     // various built-in collectors that are provided by Java's Collectors interface.
 
-    @Asynchronous
+    @Asynchronous //TODO 28636 not spec compliant (Asynchronous not in 1.0)
     @Delete
     CompletableFuture<Long> removeAll();
 
-    @Asynchronous
+    @Asynchronous //TODO 28636 not spec compliant (Asynchronous not in 1.0)
     @Save
     CompletableFuture<List<Person>> save(Person... p);
 
     @Query("UPDATE Person o SET o.lastName=:lastName WHERE o.ssn_id=:ssn")
     long setSurname(@Param("ssn") long ssn, @Param("lastName") String newSurname);
 
-    @Asynchronous
+    @Asynchronous //TODO 28636 not spec compliant (Asynchronous not in 1.0)
     @Query("UPDATE Person SET lastName=?2 WHERE ssn_id=?1")
     CompletableFuture<Boolean> setSurnameAsync(long ssn_id, String lastName);
 }
