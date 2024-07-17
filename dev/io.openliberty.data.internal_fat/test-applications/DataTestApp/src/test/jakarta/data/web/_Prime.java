@@ -22,31 +22,32 @@ import jakarta.data.metamodel.impl.TextAttributeRecord;
 
 /**
  * Metamodel for the Prime entity.
+ * Using class instead of interface with public static final fields
  */
 @StaticMetamodel(Prime.class)
-public interface _Prime {
-    String BINARYDIGITS = "binaryDigits";
-    String EVEN = "even";
-    String HEX = "hex";
-    String NAME = "name";
-    String NUMBERID = "numberId";
-    String ROMANNUMERAL = "romanNumeral";
-    String ROMANNUMERALSYMBOLS = "romanNumeralSymbols";
-    String SUMOFBITS = "sumOfBits";
+public class _Prime {
+    public static final String BINARYDIGITS = "binaryDigits";
+    public static final String EVEN = "even";
+    public static final String HEX = "hex";
+    public static final String NAME = "name";
+    public static final String NUMBERID = "numberId";
+    public static final String ROMANNUMERAL = "romanNumeral";
+    public static final String ROMANNUMERALSYMBOLS = "romanNumeralSymbols";
+    public static final String SUMOFBITS = "sumOfBits";
 
-    TextAttribute<Prime> binaryDigits = new TextAttributeRecord<>(BINARYDIGITS);
+    public static final TextAttribute<Prime> binaryDigits = new TextAttributeRecord<>(BINARYDIGITS);
 
-    SortableAttribute<Prime> even = new SortableAttributeRecord<>(EVEN);
+    public static final SortableAttribute<Prime> even = new SortableAttributeRecord<>(EVEN);
 
-    TextAttribute<Prime> hex = new TextAttributeRecord<>(HEX);
+    public static final TextAttribute<Prime> hex = new TextAttributeRecord<>(HEX);
 
-    TextAttribute<Prime> name = new TextAttributeRecord<>(NAME);
+    public static final TextAttribute<Prime> name = new TextAttributeRecord<>(NAME);
 
-    SortableAttribute<Prime> numberId = new SortableAttributeRecord<>(NUMBERID);
+    public static final SortableAttribute<Prime> numberId = new SortableAttributeRecord<>(NUMBERID);
 
-    TextAttribute<Prime> romanNumeral = new TextAttributeRecord<>(ROMANNUMERAL);
+    public static final TextAttribute<Prime> romanNumeral = new TextAttributeRecord<>(ROMANNUMERAL);
 
-    Attribute<Prime> romanNumeralSymbols = new AttributeRecord<>(ROMANNUMERALSYMBOLS);
+    public static final Attribute<Prime> romanNumeralSymbols = new AttributeRecord<>(ROMANNUMERALSYMBOLS);
 
-    SortableAttribute<Prime> sumOfBits = new SortableAttributeRecord<>(SUMOFBITS);
+    public static final SortableAttribute<Prime> sumOfBits = new SortableAttributeRecord<>(SUMOFBITS);
 }
