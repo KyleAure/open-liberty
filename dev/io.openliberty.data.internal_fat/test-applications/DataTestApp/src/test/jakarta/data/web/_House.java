@@ -22,6 +22,8 @@ import jakarta.data.metamodel.impl.TextAttributeRecord;
 
 /**
  * Metamodel for the House entity.
+ * NOTE: This static metamodel does not follow the conventions in section 3.3.3 of the specification
+ * but instead tests to ensure breaking the conventions still works
  */
 @StaticMetamodel(House.class)
 public interface _House {
