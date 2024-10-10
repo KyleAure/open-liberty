@@ -12,6 +12,8 @@
  *******************************************************************************/
 package io.openliberty.jakarta.data.tck;
 
+import static componenttest.annotation.SkipIfSysProp.OS_ZOS;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -23,6 +25,7 @@ import org.junit.runner.RunWith;
 import componenttest.annotation.AllowedFFDC;
 import componenttest.annotation.MinimumJavaLevel;
 import componenttest.annotation.Server;
+import componenttest.annotation.SkipIfSysProp;
 import componenttest.custom.junit.runner.FATRunner;
 import componenttest.topology.database.container.DatabaseContainerType;
 import componenttest.topology.database.container.DatabaseContainerUtil;
@@ -32,6 +35,7 @@ import componenttest.topology.utils.tck.TCKRunner;
 
 @RunWith(FATRunner.class)
 @MinimumJavaLevel(javaLevel = 17)
+@SkipIfSysProp(OS_ZOS) //TODO z/OS builds fail to allocate enough memory for the maven-surefire-plugin on Java 17, forked jvm fails to start.
 public class DataCoreTckLauncher {
 
     @Server("io.openliberty.jakarta.data.1.0.core")
