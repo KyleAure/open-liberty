@@ -13,8 +13,10 @@ import java.nio.ByteBuffer;
 import java.nio.charset.CharacterCodingException;
 import java.nio.charset.Charset;
 import java.nio.charset.CodingErrorAction;
-import java.util.Base64;
+import java.util.Arrays;
 import java.util.Objects;
+
+import org.apache.commons.codec.binary.Base64;
 
 /**
  * This is a map of key value pairs that represent an external test service.
@@ -28,6 +30,7 @@ class ExternalTestServiceProperty {
     private final String key;
     private final String rawValue;
 
+    private byte[] decodedByteArray = null;
     private String decodedValue = null;
     private String decryptedValue = null;
 
@@ -44,17 +47,37 @@ class ExternalTestServiceProperty {
         return rawValue;
     }
 
+    byte[] getDecodedByteArray() {
+        if (Objects.nonNull(decodedByteArray)) {
+            return decodedByteArray;
+        }
+
+        // Was not encoded, use rawValue as is
+        if (!Base64.isBase64(rawValue)) {
+            return decodedByteArray = rawValue.getBytes();
+        }
+
+        // Decode to byte array
+        return decodedByteArray = Base64.decodeBase64(rawValue);
+    }
+
     String getDecodedValue() {
         if (Objects.nonNull(decodedValue)) {
             return decodedValue;
         }
 
+        // Was not encoded, use rawValue as is
+        if (!Base64.isBase64(rawValue)) {
+            return decodedValue = rawValue;
+        }
+
+        // Decode value to String
         try {
             return decodedValue = Charset.forName("UTF-8")
                             .newDecoder()
                             .onMalformedInput(CodingErrorAction.REPORT)
                             .onUnmappableCharacter(CodingErrorAction.REPORT)
-                            .decode(ByteBuffer.wrap(Base64.getDecoder().decode(rawValue)))
+                            .decode(ByteBuffer.wrap(getDecodedByteArray()))
                             .toString();
         } catch (CharacterCodingException e) {
             throw new RuntimeException("Could not decode value", e);
@@ -66,10 +89,22 @@ class ExternalTestServiceProperty {
             return decryptedValue;
         }
 
+        // Decrypter does it's own check to verify whether or not the value needs to be decrypted.
         try {
-            return decryptedValue = ExternalTestServiceDecrypter.decrypt(decodedValue);
+            return decryptedValue = ExternalTestServiceDecrypter.decrypt(getDecodedValue());
         } catch (Exception e) {
             throw new RuntimeException("Could not decrypt value", e);
         }
     }
+
+    @Override
+    public String toString() {
+        return "ExternalTestServiceProperty"
+               + " [key=" + key
+               + ", rawValue=" + rawValue
+               + ", decodedByteArray=" + Arrays.toString(decodedByteArray)
+               + ", decodedValue=" + decodedValue
+               + ", decryptedValue=" + (decryptedValue == null ? null : "***obscured***") + "]";
+    }
+
 }
