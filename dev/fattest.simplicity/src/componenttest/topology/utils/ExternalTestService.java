@@ -15,14 +15,9 @@ package componenttest.topology.utils;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.CharBuffer;
-import java.nio.charset.CharacterCodingException;
-import java.nio.charset.Charset;
-import java.nio.charset.CodingErrorAction;
+import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Base64;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -49,7 +44,7 @@ public class ExternalTestService {
     private static final Class<?> c = ExternalTestService.class;
 
     // Service properties from consul
-    private final Map<String, ServiceProperty> props;
+    private final Map<String, ExternalTestServiceProperty> props;
 
     // Network properties to external service
     private final String address;
@@ -72,7 +67,7 @@ public class ExternalTestService {
      * @param data  - consul json response with data that represents this external test service
      * @param props - consul service properties for this external test service
      */
-    private ExternalTestService(JsonObject data, Map<String, ServiceProperty> props) {
+    private ExternalTestService(JsonObject data, Map<String, ExternalTestServiceProperty> props) {
         JsonObject serviceData = data.getJsonObject("Service");
         JsonObject nodeData = data.getJsonObject("Node");
         String networkLocationProp = getNetworkLocation() + "_address";
@@ -81,7 +76,7 @@ public class ExternalTestService {
         if (props.get(networkLocationProp) != null) {
             //The service has a private IP on the same network, so use that
             try {
-                address = props.get(networkLocationProp).getStringValue();
+                address = props.get(networkLocationProp).getDecryptedValue();
             } catch (Exception ex) {
                 address = nodeData.getString("Address");
             }
@@ -222,20 +217,20 @@ public class ExternalTestService {
 
             // Extract properties for each service instance
             // propMap maps NodeName -> Collection<ServiceProperty>
-            Map<String, Collection<ServiceProperty>> propMap = new HashMap<String, Collection<ServiceProperty>>();
+            Map<String, Collection<ExternalTestServiceProperty>> propMap = new HashMap<String, Collection<ExternalTestServiceProperty>>();
             if (propertiesJson != null) {
                 for (int index = 0; index < propertiesJson.size(); index++) {
-                    ServiceProperty property = parseServiceProperty(propertiesJson.getJsonObject(index));
-                    if (property == null) {
+                    Map.Entry<String, ExternalTestServiceProperty> entry = parseServiceProperty(propertiesJson.getJsonObject(index));
+                    if (entry == null) {
                         continue;
                     } else {
-                        Collection<ServiceProperty> propList = propMap.get(property.getNodeName());
+                        Collection<ExternalTestServiceProperty> propList = propMap.get(entry.getKey());
                         if (propList == null) {
-                            propList = new ArrayList<ServiceProperty>();
-                            propMap.put(property.getNodeName(), propList);
+                            propList = new ArrayList<ExternalTestServiceProperty>();
+                            propMap.put(entry.getKey(), propList);
                         }
 
-                        propList.add(property);
+                        propList.add(entry.getValue());
                     }
                 }
             }
@@ -247,18 +242,18 @@ public class ExternalTestService {
                 JsonObject instanceJson = instances.getJsonObject(index);
                 String nodeName = instanceJson.getJsonObject("Node").getString("Node");
 
-                Map<String, ServiceProperty> instancePropMap = new HashMap<String, ServiceProperty>();
+                Map<String, ExternalTestServiceProperty> instancePropMap = new HashMap<String, ExternalTestServiceProperty>();
 
-                Collection<ServiceProperty> commonProps = propMap.get("common");
+                Collection<ExternalTestServiceProperty> commonProps = propMap.get("common");
                 if (commonProps != null) {
-                    for (ServiceProperty prop : commonProps) {
-                        instancePropMap.put(prop.key, prop);
+                    for (ExternalTestServiceProperty prop : commonProps) {
+                        instancePropMap.put(prop.getKey(), prop);
                     }
                 }
-                Collection<ServiceProperty> serviceProps = propMap.get(nodeName);
+                Collection<ExternalTestServiceProperty> serviceProps = propMap.get(nodeName);
                 if (serviceProps != null) {
-                    for (ServiceProperty prop : serviceProps) {
-                        instancePropMap.put(prop.key, prop);
+                    for (ExternalTestServiceProperty prop : serviceProps) {
+                        instancePropMap.put(prop.getKey(), prop);
                     }
                 }
 
@@ -332,8 +327,8 @@ public class ExternalTestService {
                     throw new Exception("Property " + propertyName + " was found but contained no value. Full JSON is: " + propertyObject);
                 }
 
-                ServiceProperty prop = new ServiceProperty("", propertyName, propertyObject.getString("Value"));
-                return prop.getStringValue();
+                ExternalTestServiceProperty prop = new ExternalTestServiceProperty(propertyName, propertyObject.getString("Value"));
+                return prop.getDecryptedValue();
             } catch (Exception e) {
                 if (firstEx == null)
                     firstEx = e;
@@ -380,7 +375,7 @@ public class ExternalTestService {
      * @param  json a json object
      * @return      a service property if the object can be parsed, null otherwise.
      */
-    private static ServiceProperty parseServiceProperty(JsonObject json) {
+    private static Map.Entry<String, ExternalTestServiceProperty> parseServiceProperty(JsonObject json) {
         /*
          * Get the service property key in the form:
          * service/<service-name>/<service-instance-name>/<property-key-name>
@@ -408,7 +403,8 @@ public class ExternalTestService {
             base64EncodedValue = "";
         }
 
-        return new ServiceProperty(instanceName, keyName, base64EncodedValue);
+        return new AbstractMap.SimpleEntry<>(instanceName, new ExternalTestServiceProperty(keyName, base64EncodedValue));
+
     }
 
     /**
@@ -519,61 +515,6 @@ public class ExternalTestService {
         }
     }
 
-    ///// UTILITY CLASSES /////
-
-    /**
-     * POJO that represents a service property
-     */
-    private static class ServiceProperty {
-
-        private final String instance;
-        private final String key;
-        private String base64EncodedValue;
-        private byte[] value = null;
-        private String stringValue = null;
-
-        private ServiceProperty(String instance, String key, String base64EncodedValue) {
-            this.instance = instance;
-            this.key = key;
-            this.base64EncodedValue = base64EncodedValue;
-        }
-
-        private String getNodeName() {
-            return instance;
-        }
-
-        private String getKey() {
-            return key;
-        }
-
-        private synchronized byte[] getValue() {
-            if (value == null) {
-                value = Base64.getDecoder().decode(base64EncodedValue);
-                base64EncodedValue = null;
-            }
-            return value;
-        }
-
-        /**
-         * @return                          the value as a string
-         * @throws CharacterCodingException if the value is not a UTF-8 encoded string
-         * @throws Exception                if the value is encrypted and cannot be decrypted
-         */
-        private String getStringValue() throws CharacterCodingException, Exception {
-            if (stringValue == null) {
-                CharBuffer charValue = Charset.forName("UTF-8")
-                                .newDecoder()
-                                .onMalformedInput(CodingErrorAction.REPORT)
-                                .onUnmappableCharacter(CodingErrorAction.REPORT)
-                                .decode(ByteBuffer.wrap(getValue()));
-                String utf8Value = charValue.toString();
-
-                stringValue = ExternalTestServiceDecrypter.decrypt(utf8Value);
-            }
-            return stringValue;
-        }
-    }
-
     ///// GETTERS /////
 
     /**
@@ -622,12 +563,9 @@ public class ExternalTestService {
             return Collections.emptyMap();
         }
         Map<String, String> properties = new HashMap<String, String>();
-        for (ServiceProperty prop : props.values()) {
+        for (ExternalTestServiceProperty prop : props.values()) {
             try {
-                properties.put(prop.getKey(), prop.getStringValue());
-            } catch (CharacterCodingException e) {
-                // Skip value
-                continue;
+                properties.put(prop.getKey(), prop.getDecryptedValue());
             } catch (Exception e) {
                 e.printStackTrace();
                 continue;
@@ -644,13 +582,8 @@ public class ExternalTestService {
      * @throws Exception
      */
     private void decryptProperties() throws Exception {
-        for (ServiceProperty prop : props.values()) {
-            try {
-                prop.getStringValue();
-            } catch (CharacterCodingException e) {
-                // Skip value
-                continue;
-            }
+        for (ExternalTestServiceProperty prop : props.values()) {
+            prop.getDecryptedValue();
         }
     }
 
@@ -668,14 +601,14 @@ public class ExternalTestService {
             throw new IllegalStateException("Key not found in service properties: " + keyName);
         }
 
-        ServiceProperty prop = props.get(keyName);
+        ExternalTestServiceProperty prop = props.get(keyName);
         if (prop == null) {
             throw new IllegalStateException("Key not found in service properties: " + keyName);
         }
 
         FileOutputStream out = new FileOutputStream(file);
         try {
-            out.write(prop.getValue());
+            out.write(prop.getDecodedValue().getBytes());
         } finally {
             out.close();
         }
