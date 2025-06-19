@@ -15,7 +15,6 @@ package componenttest.topology.utils;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -24,7 +23,11 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Random;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import javax.json.JsonArray;
 import javax.json.JsonObject;
@@ -174,12 +177,15 @@ public class ExternalTestService {
     public static Collection<ExternalTestService> getServices(int count, String serviceName, ExternalTestServiceFilter filter) throws Exception {
         final String m = "getServices";
 
+        // If no filter configured, use the always matched filter
         if (filter == null) {
             filter = new ExternalTestServiceFilterAlwaysMatched();
         }
 
+        // Filter out unhealthy services
         Collection<String> unhealthyReadOnly = ExternalTestServiceReporter.getUnhealthyReport(serviceName);
 
+        // Trace expected outcome of method
         Log.info(c, m, "Getting " + count + " external test service(s) named '" + serviceName + "' with a " + filter.getClass().getName());
         if (!unhealthyReadOnly.isEmpty()) {
             Log.info(c, m, "\tExisting unhealthy instances: " + unhealthyReadOnly.toString());
@@ -187,6 +193,8 @@ public class ExternalTestService {
 
         Exception finalError = null;
         for (String consulServer : getConsulServers()) {
+
+            // Get list of service instances from consul
             JsonArray instances;
             try {
                 HttpsRequest instancesRequest = new HttpsRequest(consulServer + "/v1/health/service/" + serviceName + "?passing=true&stale")
@@ -198,11 +206,12 @@ public class ExternalTestService {
                 continue;
             }
 
-            //fail if no instances available
+            // Fail if no instances available
             if (instances.isEmpty()) {
                 throw new Exception("There are no healthy services available for " + serviceName);
             }
 
+            // Get list of service instances and their properties from consul
             JsonArray propertiesJson;
             try {
                 HttpsRequest propsRequest = new HttpsRequest(consulServer + "/v1/kv/service/" + serviceName + "/?recurse=true&stale");
@@ -215,58 +224,43 @@ public class ExternalTestService {
                 continue;
             }
 
-            // Extract properties for each service instance
-            // propMap maps NodeName -> Collection<ServiceProperty>
-            Map<String, Collection<ExternalTestServiceProperty>> propMap = new HashMap<String, Collection<ExternalTestServiceProperty>>();
-            if (propertiesJson != null) {
-                for (int index = 0; index < propertiesJson.size(); index++) {
-                    Map.Entry<String, ExternalTestServiceProperty> entry = parseServiceProperty(propertiesJson.getJsonObject(index));
-                    if (entry == null) {
-                        continue;
-                    } else {
-                        Collection<ExternalTestServiceProperty> propList = propMap.get(entry.getKey());
-                        if (propList == null) {
-                            propList = new ArrayList<ExternalTestServiceProperty>();
-                            propMap.put(entry.getKey(), propList);
-                        }
+            // Collect all services and their properties into a map (if service provides any properties)
+            // [Key: hostname, Value: [collection-of-properties] ]
+            Map<String, List<ExternalTestServiceProperty>> testServiceMap = propertiesJson == null ? Collections.emptyMap() : //
+                            IntStream.range(0, propertiesJson.size())
+                                            .mapToObj(i -> propertiesJson.getJsonObject(i))
+                                            .map(obj -> parseServiceProperty(obj))
+                                            .filter(entry -> entry != null)
+                                            .collect(Collectors.groupingBy(ExternalTestServiceProperty::getId));
 
-                        propList.add(entry.getValue());
-                    }
-                }
-            }
+            // Common properties shared by all services
+            List<ExternalTestServiceProperty> common = Optional.ofNullable(testServiceMap.get("common")).orElse(Collections.emptyList());
 
-            //convert to list of external test services
-            List<ExternalTestService> healthyTestServices = new ArrayList<ExternalTestService>();
-            List<ExternalTestService> unhealthyTestServices = new ArrayList<ExternalTestService>();
-            for (int index = 0; index < instances.size(); index++) {
-                JsonObject instanceJson = instances.getJsonObject(index);
-                String nodeName = instanceJson.getJsonObject("Node").getString("Node");
+            // Find all services that we expect to be healthy
+            List<ExternalTestService> healthyTestServices = IntStream.range(0, instances.size())
+                            .mapToObj(index -> instances.getJsonObject(index))
+                            // Map to a tuple representing the instance and the instance's id
+                            .map(object -> new Object() {
+                                JsonObject instance = object;
+                                String id = object.getJsonObject("Node").getString("Node");
+                            })
+                            // Map to an external test service with properties
+                            .map(instTuple -> {
 
-                Map<String, ExternalTestServiceProperty> instancePropMap = new HashMap<String, ExternalTestServiceProperty>();
+                                // Unique properties for this service
+                                List<ExternalTestServiceProperty> service = Optional.ofNullable(testServiceMap.get(instTuple.id)).orElse(Collections.emptyList());
 
-                Collection<ExternalTestServiceProperty> commonProps = propMap.get("common");
-                if (commonProps != null) {
-                    for (ExternalTestServiceProperty prop : commonProps) {
-                        instancePropMap.put(prop.getKey(), prop);
-                    }
-                }
-                Collection<ExternalTestServiceProperty> serviceProps = propMap.get(nodeName);
-                if (serviceProps != null) {
-                    for (ExternalTestServiceProperty prop : serviceProps) {
-                        instancePropMap.put(prop.getKey(), prop);
-                    }
-                }
+                                // A collection that represents all the properties of this service
+                                // [Key: property-key, Value: property ]
+                                Map<String, ExternalTestServiceProperty> servicePropertyMap = Stream
+                                                .concat(common.stream(), service.stream())
+                                                .collect(Collectors.toMap(prop -> prop.getKey(), prop -> prop));
 
-                ExternalTestService instance = new ExternalTestService(instanceJson, instancePropMap);
-
-                boolean unhealthy = unhealthyReadOnly.contains(instance.getAddress());
-                if (!unhealthy) {
-                    //Add to possible list
-                    healthyTestServices.add(instance);
-                } else {
-                    unhealthyTestServices.add(instance);
-                }
-            }
+                                return new ExternalTestService(instTuple.instance, servicePropertyMap);
+                            })
+                            // Filter out any service that is known to be unhealthy
+                            .filter(service -> !unhealthyReadOnly.contains(service.getAddress()))
+                            .collect(Collectors.toList());
 
             Log.info(c, m, "Found " + healthyTestServices.size() + " potential " + serviceName + " services, attempting to find a matching service.");
 
@@ -290,54 +284,6 @@ public class ExternalTestService {
     }
 
     ///// UTILITY METHODS /////
-
-    /**
-     * Retrieves a Consul value from a key/value pair that may or may not be associated with a Consul service.
-     *
-     * TODO consider removing as this method is unused
-     *
-     * @param propertyName The property name or path. It should be available in a web browser at:
-     *                         ${consulServer}/v1/kv/service/${propertyName}
-     */
-    @Deprecated
-    private static String getProperty(String propertyName) throws Exception {
-        Exception firstEx = null;
-        for (String consulServer : getConsulServers()) {
-            try {
-                JsonArray propertiesJson = new HttpsRequest(consulServer + "/v1/kv/service/" + propertyName + "?recurse=true&stale")
-                                .allowInsecure()
-                                .timeout(30000)
-                                .expectCode(HttpsURLConnection.HTTP_OK)
-                                .expectCode(HttpsURLConnection.HTTP_NOT_FOUND)
-                                .run(JsonArray.class);
-
-                if (propertiesJson == null) {
-                    throw new Exception("The Consul server (" + consulServer
-                                        + ") was unavailable or did not return a result for the property: " + propertyName
-                                        + ". Look on #was-liberty-ops for outages, or updates to global.consulServerList");
-                }
-
-                if (propertiesJson.size() != 1) {
-                    throw new Exception("Expected to find exactly 1 property but found " + propertiesJson.size() +
-                                        ". Full JSON is: " + propertiesJson);
-
-                }
-                JsonObject propertyObject = propertiesJson.getJsonObject(0);
-                if (!propertyObject.containsKey("Value")) {
-                    throw new Exception("Property " + propertyName + " was found but contained no value. Full JSON is: " + propertyObject);
-                }
-
-                ExternalTestServiceProperty prop = new ExternalTestServiceProperty(propertyName, propertyObject.getString("Value"));
-                return prop.getDecryptedValue();
-            } catch (Exception e) {
-                if (firstEx == null)
-                    firstEx = e;
-                continue;
-            }
-        }
-
-        throw firstEx;
-    }
 
     private static List<String> consulServers = null;
 
@@ -375,7 +321,7 @@ public class ExternalTestService {
      * @param  json a json object
      * @return      a service property if the object can be parsed, null otherwise.
      */
-    private static Map.Entry<String, ExternalTestServiceProperty> parseServiceProperty(JsonObject json) {
+    private static ExternalTestServiceProperty parseServiceProperty(JsonObject json) {
         /*
          * Get the service property key in the form:
          * service/<service-name>/<service-instance-name>/<property-key-name>
@@ -403,7 +349,7 @@ public class ExternalTestService {
             base64EncodedValue = "";
         }
 
-        return new AbstractMap.SimpleEntry<>(instanceName, new ExternalTestServiceProperty(keyName, base64EncodedValue));
+        return new ExternalTestServiceProperty(instanceName, keyName, base64EncodedValue);
 
     }
 
@@ -432,7 +378,7 @@ public class ExternalTestService {
         Collection<ExternalTestService> matchedServices = new ArrayList<ExternalTestService>();
 
         for (ExternalTestService externalTestService : testServices) {
-            //Do Network Location Filtering
+            // Do network location filtering
             try {
                 String locationString = externalTestService.getProperties().get("allowed.networks");
                 if (locationString != null) {
@@ -448,12 +394,8 @@ public class ExternalTestService {
                     }
 
                 }
-                //If it reached here network is allowable
 
-                // Decrypt properties
-                externalTestService.decryptProperties();
-
-                //Do Filter
+                // Do service level filtering
                 boolean isMatched = filter.isMatched(externalTestService);
                 if (isMatched) {
                     //We found one
@@ -575,19 +517,6 @@ public class ExternalTestService {
     }
 
     /**
-     * Iterates through the list of properties and calls getStringValue()
-     * This is an eager decrypt so we can fail fast if the accessToken
-     * is unset or rejected by the decrypter service.
-     *
-     * @throws Exception
-     */
-    private void decryptProperties() throws Exception {
-        for (ExternalTestServiceProperty prop : props.values()) {
-            prop.getDecryptedValue();
-        }
-    }
-
-    /**
      * Write a service property value to a file.
      * Useful if you have a truststore or keyfile stored in your service properties
      *
@@ -608,7 +537,7 @@ public class ExternalTestService {
 
         FileOutputStream out = new FileOutputStream(file);
         try {
-            out.write(prop.getDecodedValue().getBytes());
+            out.write(prop.getDecodedByteArray());
         } finally {
             out.close();
         }

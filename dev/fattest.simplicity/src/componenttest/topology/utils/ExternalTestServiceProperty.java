@@ -27,6 +27,7 @@ import org.apache.commons.codec.binary.Base64;
  */
 class ExternalTestServiceProperty {
 
+    private final String id;
     private final String key;
     private final String rawValue;
 
@@ -34,9 +35,14 @@ class ExternalTestServiceProperty {
     private String decodedValue = null;
     private String decryptedValue = null;
 
-    ExternalTestServiceProperty(String key, String rawValue) {
+    ExternalTestServiceProperty(String id, String key, String rawValue) {
+        this.id = Objects.requireNonNull(id);
         this.key = Objects.requireNonNull(key);
         this.rawValue = Objects.requireNonNull(rawValue);
+    }
+
+    String getId() {
+        return id;
     }
 
     String getKey() {
