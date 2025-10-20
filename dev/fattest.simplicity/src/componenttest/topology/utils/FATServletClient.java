@@ -23,6 +23,7 @@ import java.net.URL;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
+import org.junit.internal.AssumptionViolatedException;
 import org.junit.rules.TestName;
 import org.junit.rules.TestRule;
 
@@ -31,6 +32,7 @@ import com.ibm.websphere.simplicity.config.dsprops.testrules.DataSourcePropertie
 import com.ibm.websphere.simplicity.log.Log;
 
 import componenttest.app.AssertionErrorSerializer;
+import componenttest.app.AssumptionViolatedExceptionSerializer;
 import componenttest.app.FATServlet;
 import componenttest.custom.junit.runner.RepeatTestFilter;
 import componenttest.topology.impl.LibertyServer;
@@ -104,6 +106,12 @@ public class FATServletClient {
                 throw error;
             }
             fail(response);
+        } else {
+            if (response.contains(AssumptionViolatedExceptionSerializer.START_TAG) &&
+                response.contains(AssumptionViolatedExceptionSerializer.END_TAG)) {
+                AssumptionViolatedException error = parseAssumptionViolatedException(response);
+                throw error;
+            }
         }
     }
 
@@ -128,6 +136,30 @@ public class FATServletClient {
         String json = response.substring(startIdx + AssertionErrorSerializer.START_TAG.length(), endIdx);
 
         AssertionError e = AssertionErrorSerializer.deserialize(json);
+        return e;
+    }
+
+    /**
+     * Parse and deserialize a response string to extract an AssumptionViolatedException instance.
+     * The response string must contain some JSON that represents a serialized AssumptionViolatedException.
+     * The JSON String is wrapped by START_TAG and END_TAG
+     *
+     * @param  response              The response String that contains the serialized AssumptionViolatedException as json
+     * @return                       an instance of AssumptionViolatedException
+     * @throws IllegalStateException if the START_TAG or END_TAG can not be found in the response string
+     */
+    private static AssumptionViolatedException parseAssumptionViolatedException(String response) {
+
+        int startIdx = response.indexOf(AssumptionViolatedExceptionSerializer.START_TAG);
+        int endIdx = response.indexOf(AssumptionViolatedExceptionSerializer.END_TAG);
+
+        if (startIdx < 0 || endIdx < 0) {
+            throw new IllegalStateException("AssumptionViolatedException tags not found in response: " + response);
+        }
+
+        String json = response.substring(startIdx + AssumptionViolatedExceptionSerializer.START_TAG.length(), endIdx);
+
+        AssumptionViolatedException e = AssumptionViolatedExceptionSerializer.deserialize(json);
         return e;
     }
 

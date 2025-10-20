@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2020, 2024 IBM Corporation and others.
+ * Copyright (c) 2020, 2025 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
@@ -19,6 +19,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 import org.junit.Assert;
+import org.junit.internal.AssumptionViolatedException;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
@@ -71,16 +72,48 @@ public abstract class FATServlet extends HttpServlet {
                 // 1)  method(HttpServletRequest request, HttpServletResponse response)
                 // 2)  method()
                 // 3)  use custom method invocation by calling invokeTest(method, request, response)
+                Method mthd = null;
+
                 try {
-                    Method mthd = getClass().getMethod(method, HttpServletRequest.class, HttpServletResponse.class);
-                    mthd.invoke(this, request, response);
+                    mthd = getClass().getMethod(method, HttpServletRequest.class, HttpServletResponse.class);
                 } catch (NoSuchMethodException nsme) {
+                }
+
+                if (mthd == null) {
                     try {
-                        Method mthd = getClass().getMethod(method, (Class<?>[]) null);
-                        mthd.invoke(this);
-                    } catch (NoSuchMethodException nsme1) {
-                        invokeTest(method, request, response);
+                        mthd = getClass().getMethod(method, (Class<?>[]) null);
+                    } catch (NoSuchMethodException nsme) {
                     }
+                }
+
+                try {
+                    if (mthd == null) {
+                        invokeTest(method, request, response);
+                    } else {
+                        mthd.invoke(this);
+                    }
+                } catch (Throwable original) {
+                    Throwable unwrapped;
+
+                    if (original instanceof InvocationTargetException) {
+                        unwrapped = original.getCause();
+                    } else {
+                        unwrapped = original;
+                    }
+
+                    if (unwrapped instanceof AssumptionViolatedException) {
+                        AssumptionViolatedException e = (AssumptionViolatedException) unwrapped;
+                        System.out.println("ASSUPMTION ERROR: " + e);
+                        writer.write(AssumptionViolatedExceptionSerializer.START_TAG);
+                        AssumptionViolatedException simple = AssumptionViolatedExceptionSerializer.simplify(getClass(), method, e);
+                        AssumptionViolatedExceptionSerializer.serialize(simple, writer);
+                        writer.write(AssumptionViolatedExceptionSerializer.END_TAG);
+                        // DO NOT RETHROW - an assumption error is a successful state
+                    } else {
+                        // rethrow
+                        throw original;
+                    }
+
                 } finally {
                     after();
                 }

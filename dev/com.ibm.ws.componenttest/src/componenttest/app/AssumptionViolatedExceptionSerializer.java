@@ -1,0 +1,249 @@
+/*******************************************************************************
+ * Copyright (c) 2021, 2025 IBM Corporation and others.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License 2.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-2.0/
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ *
+ * Contributors:
+ *     IBM Corporation - initial API and implementation
+ *******************************************************************************/
+package componenttest.app;
+
+import java.io.Reader;
+import java.io.StringReader;
+import java.io.StringWriter;
+import java.io.Writer;
+import java.util.ArrayList;
+
+import javax.json.Json;
+import javax.json.JsonArray;
+import javax.json.JsonArrayBuilder;
+import javax.json.JsonBuilderFactory;
+import javax.json.JsonObject;
+import javax.json.JsonObjectBuilder;
+import javax.json.JsonReader;
+import javax.json.JsonReaderFactory;
+import javax.json.JsonWriter;
+import javax.json.JsonWriterFactory;
+
+import org.junit.internal.AssumptionViolatedException;
+
+/**
+ * Serializes and Deserializes an AssumptionViolatedException to/from JSON
+ */
+public class AssumptionViolatedExceptionSerializer {
+
+    //eye-catcher tags to denote the start and end of JSON content
+    public static final String START_TAG = "###AssumptionViolatedException Json Start###";
+    public static final String END_TAG = "###AssumptionViolatedException Json End###";
+    //JSON property names
+    private static final String CLASS_NAME_KEY = "className";
+    private static final String METHOD_NAME_KEY = "methodName";
+    private static final String EXCEPTION_TYPE_KEY = "exceptionType";
+    private static final String MESSAGE_KEY = "message";
+    private static final String STACK_KEY = "stack";
+    private static final String FILE_NAME_KEY = "fileName";
+    private static final String LINE_NUMBER_KEY = "lineNumber";
+    //The FATServlet.doGet method name
+    private static final String DO_GET = "doGet";
+
+    //JSON Factories
+    private static final JsonBuilderFactory BUILDER_FACTORY = Json.createBuilderFactory(null);
+    private static final JsonReaderFactory READER_FACTORY = Json.createReaderFactory(null);
+    private static final JsonWriterFactory WRITER_FACTORY = Json.createWriterFactory(null);
+
+    /**
+     * Serialize out an AssumptionViolatedException as a JSON String
+     *
+     * @param e The AssumptionViolatedException
+     * @return A JSON String
+     */
+    public static String serialize(AssumptionViolatedException e) {
+        StringWriter writer = new StringWriter();
+        serialize(e, writer);
+        return writer.toString();
+    }
+
+    /**
+     * Serialize out an AssumptionViolatedException as a JSON String via the given writer
+     *
+     * @param e      The AssumptionViolatedException
+     * @param writer A Writer to writer out the JSON String to
+     */
+    public static void serialize(AssumptionViolatedException e, Writer writer) {
+        JsonObject json = serializeAssumptionViolatedException(e);
+        JsonWriter jsonWriter = WRITER_FACTORY.createWriter(writer);
+        jsonWriter.writeObject(json);
+    }
+
+    /**
+     * @param json A json string containing the serialized form of an AssumptionViolatedException
+     * @return An instance of AssumptionViolatedException
+     */
+    public static AssumptionViolatedException deserialize(String json) {
+        StringReader reader = new StringReader(json);
+        AssumptionViolatedException e = deserialize(reader);
+        return e;
+    }
+
+    /**
+     * @param reader A Reader to read the json from; the serialized form of an AssumptionViolatedException
+     * @return An instance of AssumptionViolatedException
+     */
+    public static AssumptionViolatedException deserialize(Reader reader) {
+        JsonReader jsonReader = READER_FACTORY.createReader(reader);
+        JsonObject jsonObject = jsonReader.readObject();
+        jsonReader.close();
+
+        AssumptionViolatedException e = deserializeAssumptionViolatedException(jsonObject);
+        return e;
+    }
+
+    /**
+     * Serialize out an AssumptionViolatedException as a JsonObject
+     *
+     * @param e The AssumptionViolatedException
+     * @return A JsonObject
+     */
+    private static JsonObject serializeAssumptionViolatedException(AssumptionViolatedException e) {
+        JsonObjectBuilder builder = BUILDER_FACTORY.createObjectBuilder();
+        builder.add(EXCEPTION_TYPE_KEY, "AssumptionViolatedException");
+        builder.add(MESSAGE_KEY, e.getMessage());
+
+        StackTraceElement[] stack = e.getStackTrace();
+        JsonArray stackJson = serializeStack(stack);
+        builder.add(STACK_KEY, stackJson);
+
+        return builder.build();
+    }
+
+    /**
+     * Deserialize an AssumptionViolatedException from a JsonObject
+     *
+     * @param jsonObject The JsonObject which represents the AssumptionViolatedException
+     * @return An instance of AssumptionViolatedException
+     * @throws IllegalStateException if the exception type specified was not AssumptionViolatedException
+     */
+    private static AssumptionViolatedException deserializeAssumptionViolatedException(JsonObject jsonObject) {
+
+        String exceptionType = jsonObject.getString(EXCEPTION_TYPE_KEY);
+        if (!"AssumptionViolatedException".equals(exceptionType)) {
+            throw new IllegalStateException("Unknown exception type: " + exceptionType);
+        }
+
+        String message = jsonObject.getString(MESSAGE_KEY);
+
+        JsonArray stackJson = jsonObject.getJsonArray(STACK_KEY);
+        StackTraceElement[] stack = deserializeStack(stackJson);
+
+        AssumptionViolatedException AssumptionViolatedException = new AssumptionViolatedException(message);
+        AssumptionViolatedException.setStackTrace(stack);
+
+        return AssumptionViolatedException;
+    }
+
+    /**
+     * Serialize an exception stacktrace as a JsonArray
+     *
+     * @param stack an array of stack trace elements
+     * @return A JsonArray
+     */
+    private static JsonArray serializeStack(StackTraceElement[] stack) {
+        JsonArrayBuilder stackBuilder = BUILDER_FACTORY.createArrayBuilder();
+
+        for (StackTraceElement element : stack) {
+            JsonObject elementJson = serializeStackTraceElement(element);
+            stackBuilder.add(elementJson);
+        }
+
+        return stackBuilder.build();
+    }
+
+    /**
+     * Deserialize an exception stacktrace from a JsonArray
+     *
+     * @param jsonArray A JsonArray that represents the stacktrace
+     * @return An array of StackTraceElements
+     */
+    private static StackTraceElement[] deserializeStack(JsonArray jsonArray) {
+        int size = jsonArray.size();
+        StackTraceElement[] stack = new StackTraceElement[size];
+        for (int i = 0; i < size; i++) {
+            JsonObject elementJson = jsonArray.getJsonObject(i);
+            StackTraceElement element = deserializeStackTraceElement(elementJson);
+            stack[i] = element;
+        }
+
+        return stack;
+    }
+
+    /**
+     * Serialize a StackTraceElement out as a JsonObject
+     *
+     * @param stackTraceElement A stack trace element
+     * @return A JsonObject
+     */
+    private static JsonObject serializeStackTraceElement(StackTraceElement stackTraceElement) {
+        JsonObjectBuilder builder = BUILDER_FACTORY.createObjectBuilder();
+        builder.add(CLASS_NAME_KEY, stackTraceElement.getClassName());
+        builder.add(METHOD_NAME_KEY, stackTraceElement.getMethodName());
+        if (stackTraceElement.getFileName() != null) {
+            builder.add(FILE_NAME_KEY, stackTraceElement.getFileName());
+        }
+        builder.add(LINE_NUMBER_KEY, stackTraceElement.getLineNumber());
+        return builder.build();
+    }
+
+    /**
+     * Deserialize a StackTraceElement from a JsonObject
+     *
+     * @param jsonObject A JsonObject that represents a stack trace element
+     * @return A StackTraceElement instance
+     */
+    private static StackTraceElement deserializeStackTraceElement(JsonObject jsonObject) {
+        String declaringClass = jsonObject.getString(CLASS_NAME_KEY, null);
+        String methodName = jsonObject.getString(METHOD_NAME_KEY, null);
+        String fileName = jsonObject.getString(FILE_NAME_KEY, null);
+        int lineNumber = jsonObject.getInt(LINE_NUMBER_KEY);
+        StackTraceElement element = new StackTraceElement(declaringClass, methodName, fileName, lineNumber);
+        return element;
+    }
+
+    /**
+     * Simplify an AssumptionViolatedException that has been thrown from a test in a subclass of FATServlet.
+     * This will change the error message to include the FAT classname and test method name.
+     * It will also shorten the stacktrace to stop at FATServlet.doGet because everything after that
+     * will always be the same and is not of any interest.
+     *
+     * @param fatClass      The FAT class which originally threw the AssumptionViolatedException
+     * @param fatMethodName The FAT method which originally threw the AssumptionViolatedException
+     * @param e             The original AssumptionViolatedException
+     * @return A simplified AssumptionViolatedException
+     */
+    public static <T extends FATServlet> AssumptionViolatedException simplify(Class<T> fatClass, String fatMethodName, AssumptionViolatedException e) {
+        AssumptionViolatedException AssumptionViolatedException = new AssumptionViolatedException(fatClass.getSimpleName() + "." + fatMethodName + ": " + e.getMessage());
+        StackTraceElement[] originalStack = e.getStackTrace();
+        ArrayList<StackTraceElement> shortenedStack = new ArrayList<>();
+
+        for (StackTraceElement element : originalStack) {
+            String declaringClass = element.getClassName();
+            String methodName = element.getMethodName();
+            String fileName = element.getFileName();
+            int lineNumber = element.getLineNumber();
+            StackTraceElement newElement = new StackTraceElement(declaringClass, methodName, fileName, lineNumber);
+
+            shortenedStack.add(newElement);
+
+            //the stack beyond doGet is always the same so don't output any more
+            if ((FATServlet.class.getSimpleName() + ".java").equals(fileName) && DO_GET.equals(methodName)) {
+                break;
+            }
+        }
+
+        AssumptionViolatedException.setStackTrace(shortenedStack.toArray(new StackTraceElement[shortenedStack.size()]));
+        return AssumptionViolatedException;
+    }
+}
